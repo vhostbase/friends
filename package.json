@@ -1,0 +1,29 @@
+{
+  "lockfileVersion": 1,
+  "scripts": {
+    "start": "node --inspect server.js"
+  },
+  "name": "friends",
+  "version": "1.0.0",
+  "main": "server.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vhostbase/friends.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vhostbase/friends/issues"
+  },
+  "homepage": "https://github.com/vhostbase/friends#readme",
+  "description": "",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "http": "0.0.0",
+    "path": "^0.12.7",
+    "url": "^0.11.0"
+  }
+}

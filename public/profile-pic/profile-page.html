@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- My style -->
+    <link rel="stylesheet" href="profile-page-style.css">
+    <title>(1) WhatsApp</title>
+  </head>
+  <body style="overflow-y: scroll; height:150px; width: auto;">
+    <div class="container-fluid main" id="mainDiv">
+        <div class="row">
+            <div id="chgProfile" class="col-lg-4 col-xs-12 left">
+	            <div class="row d-flex justify-content-end profile-section-top">
+	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome();"><i class="fas fa-arrow-left text-white"></i></div>
+				  <div class="mr-auto p-2 profile-section-top-text">Profile</div>
+				  <div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doRegister();"><i class="fas fa-check text-white"></i></div>
+				</div>
+                <div class="row profile-section-pic">
+                	<input type="file" id="profile-pic-input" class="d-none">
+                    <img id="profilePhoto" src="../img/profile-img-new.PNG" alt="" style="cursor:pointer;" class="rounded-circle" onclick="uploadPhoto();">
+                </div>
+                <div class="row profile-section-info">
+                    <div class="container-group">
+                        <div class="row">
+                            <span>Your Name</span>
+                        </div>
+                        <div class="row push-down">
+                            <span id="lbl_contact_name">Enter Your Name</span>
+                            <input type="text" id="contact_name" style="display:none;"></input>
+                            <img src="../img/edit-icon.PNG" alt="" style="cursor:pointer;" onclick="doEditName();">
+                        </div>
+                    </div>
+                </div>
+                <div class="row profile-section-warning">
+                    <span>This is not your username or pin. This name will be visible to your WhatsApp contacts.</span>
+                </div>
+                <div class="row  profile-section-about">
+                    <div class="container-group">
+                        <div class="row">
+                            <span>About</span>
+                        </div>
+                        <div class="row push-down">
+                            <span id="lbl_contact_desc">Hi I am Available</span>
+                            <input type="text" id="contact_desc" style="display:none;"></input>
+                            <img src="../img/edit-icon.PNG" style="cursor:pointer;" onclick="doEditAbout();">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8 d-none d-lg-block d-xl-block right">
+                <div class="text-center">
+                    <img src="../img/watsapp-only.PNG" alt="">
+                    <p class="main-text font-weight-light">Keep your phone connected</p>
+                    <p>
+                        WhatsApp connects to your phone to sync messages. To reduce data <br> usage, connect your phone to Wi-Fi.
+                    </p>
+                    <hr>
+                    <p>
+                        <img src="../img/computer-icon.PNG" alt="">
+                        <span>
+                            WhatsApp is available for Windows. 
+                            <a href="">Get it here</a>
+                        </span>
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" tabindex="-1" role="dialog" id="spinnerModal">
+	    <div class="modal-dialog modal-dialog-centered text-center" role="document">
+	        <span class="fa fa-spinner fa-spin fa-3x w-100"></span>
+	    </div>
+	</div>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-database.js"></script>
+	<script src="../js/apputil.js"></script>
+	<script src="../js/auth.js"></script>
+	<script src="js/index.js"></script>
+  </body>
+</html>
