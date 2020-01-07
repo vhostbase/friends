@@ -44,7 +44,7 @@ if(!isDebug){
 	}
 }
 var auth = firebase.auth();
-var loadContacts, addProfile, clearContacts, showContactPanel;
+var loadContacts, addProfile, clearContacts, showContactPanel, loadChatContacts, loadGroupContacts;
 let initAuth = () => {
 	block_screen();
 	var register = localStorage.getItem("is_registration");
@@ -96,16 +96,22 @@ function loadContactData(profileData, currentUser){
 	if(showContactPanel)
 		showContactPanel();
 	var lastContact;
+	loadContacts({name:'New Group', event: 'onclick="createGroup();"'});
+	loadContacts({name:'New Contact'});
 	for (const [key, value] of Object.entries(profileData)) {
 		if(currentUser.uid === key){
 			if(addProfile)
 				addProfile(value);
 			continue;
 		}
-		if(loadContacts !== undefined){
+		if(loadContacts){
 			loadContacts(value);
 			lastContact = value;
 		}
+		if(loadChatContacts)
+			loadChatContacts(value);
+		if(loadGroupContacts)
+			loadGroupContacts(value);
 	}
 	//showChat2(lastContact.pic, lastContact.name, lastContact.id);
 	unblock_screen();

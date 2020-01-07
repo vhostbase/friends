@@ -56,9 +56,7 @@ function doRegister(){
 		pic: "img/profile-img-new.PNG",
 		lastSeen: "Apr 29 2018 17:58:02"
 	};
-	if(getProfilePhoto() != null && getProfilePhoto().indexOf("img/profile-img-new.PNG") === -1){
-		userData.pic = getProfilePhoto();
-	}
+	userData.pic = getProfilePhoto();
 	database.ref('chat_contacts/'+currentUser.uid).set(userData, function(error) {
 		if(error){
 			console.log(error);
@@ -74,10 +72,14 @@ function doRegister(){
 }
 
 function getProfilePhoto(){
-	return $('#profilePhoto')[0].src;
+	var data = $('#profilePhoto').attr('src');
+	if(data.indexOf("img/profile-img-new.PNG") > -1){
+		data = getDefaultPhoto();
+	}
+	return data;
 }
 function addChgProfile(profileData){
-	$('#profilePhoto')[0].src = profileData.pic;
+	$('#profilePhoto').attr('src', profileData.pic);
 	$('#lbl_contact_name').text(profileData.name);
 	showProfilePanel2();
 	//unblock_screen();
@@ -91,4 +93,52 @@ function showProfilePanel(){
 		addChgProfile(profileData);
 	});
 
+}
+function getGrpProfilePhoto(){
+	var data = $('#groupPic').attr('src');
+	if(data.indexOf("img/profile-img-new.PNG") > -1){
+		data = getDefaultPhoto();
+	}
+	return data;
+}
+function getDefaultPhoto(){
+	return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAAwCAYAAABaHInAAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALgSURBVGhD7ZqBbpswEIb3/i+5dV1KIZBkrTJK2tTji7BkscOcD4ctU076pArs8/1g7DunX3a7nfsfuQu7NbILq+rabcrKfS+e3bdN4b6O4Br3nvo2tJV85CCLsLpp3I/n8g8RGhBKX3xIvq0sEtb0wTwaBUngC5/SWKmYhRXVVgwuB0VViWOmYBKW8y1NwRjS2FqShfHhS4FcA8aSYtCQJGxNUR6rOLWwNabfFJZpqRJ2zYVCS+qCMiuM5VcaSEtRN267P7jm8NMV22W+UraCWWGWKfhQlG7/8urO57MbG9e4Rxupb4yUKRkVRjYgDRCDgLvTaZAxbbSxiNNmKFFhljSp7boh9Hlr3zrRRwxikmIdExUmJbEx+JZSjT6SrxhSrGMmhZF5S05jHNu3IVy90UfyFaNUVAWTwigrJKcxrCb5ikFZJMUcMinMkmVYTfIVQ5ONTApL/b7AapKvGMQmxRwyKUxyOEd3eh9C1Rt9JF9zSDGHZBXWHF6GcPVGH8nXHFLMIVmFseG+f3wMIc8bbS2bNEgxh2QVBpuq7tOmzyH0aaMNbSUfGqSYQ7IuHh4CjmUg3FsiatHikaOoJHgS3tfjr8tGzN9LBHkWLfeWDXotFm3QlpRqLRalVGD9zspmf5l2x7a9ZPAhXONe2dgXKCnWMVFhKWULlTLfUqrRh76ST4ksZYum0GQfsggaGz40e1qWQhNiRwOscFL5bzV8xVbNx164FKPErLCpw5zcorzFxGU9zAGOvsIBriXKmyTuKffxmyeckpYsPtU47PHjXe3A1MOOz5NcyxhLk2VIJAkDBuIARpPoWg3f7IVWUZAsDJgaPM2UEkVr+MS3ZfqFmIQBC8pD/0TJInK8PXzgi2/qr/3w52H55cmysRKU5Q3Sh774wFfKkh5jkTAP2YBPv5hGlPvUXFJN5q/Thrb0oa82o9CSRVgImbfm3yFoo8nSrWQX9q9wF3Zr3IXdFjv3G/EWPMFeJopvAAAAAElFTkSuQmCC";
+}
+/*
+	{
+		id: 1,
+		name: "Programmers",
+		members: [0, 1, 3],
+		pic: "images/0923102932_aPRkoW.jpg"
+	}
+*/
+function createGroupProfile(callback){
+	//adjustFileds();
+	var creatorId = $('#currentId').val();
+	var memberList = [creatorId];
+	var mems = $('.list-group-contacts').find('.cursor-class');
+	for(var idx=0; idx<mems.length; idx++){
+		var member = $(mems[idx]);
+		var cid = member.find('#CID');
+		memberList.push($(cid).text());
+	}
+	var userName = localStorage.getItem("userName");
+	var database = firebase.database();
+	var userData = {
+		id: creatorId,
+		name: $('#group_name').val(),
+		number: userName,
+		members : memberList,
+		lastSeen: "Apr 29 2018 17:58:02"
+	};
+	
+	userData.pic = getGrpProfilePhoto();
+	
+	var insert = database.ref('chat_contacts');
+	var insertRef = insert.push();
+	insert.once('value', function(snapshot){
+		//console.log(snapshot.key);
+		callback();
+	});
+	insertRef.set(userData);
 }

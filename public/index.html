@@ -5,19 +5,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.4/croppie.min.css" crossorigin="anonymous">
+
     <!-- Bootstrap CSS -->
     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" crossorigin="anonymous"> -->
     <link rel="stylesheet" href="bootstrap/4.0.0/css/bootstrap.min.css" crossorigin="anonymous">
     <!-- My style -->
     <!-- <link rel="stylesheet" href="profile-page-style.css"> -->
     <link rel="stylesheet" href="chat-style.css">
-    <title>(1) WhatsApp</title>
+    <title>FriendShip</title>
   </head>
   <body>
     <div class="container-fluid main">
         <div class="row">
-            <!-- <div id="contactPanel" class="d-none d-xl-none d-lg-block d-xl-block col-lg-4 left"> -->
-            <div id="contactPanel" class="col-lg-4 col-sm-12 left">
+            <div id="contactPanel" class="d-none col-lg-4 col-sm-12 left">
                 <div class="row icons">
                     <div class="profile-img">
                             <!-- <a href="../profile-pic/profile-page.html"> -->
@@ -48,11 +49,12 @@
                 </div>
                 <div class="row recent-chats">
                     <div class="col-12">
-                    	<ul class="list-group"></ul>
+                    	<ul class="list-chats"></ul>
                     </div>
                 </div>
             </div>
-            <div id="chatbody" class="col-lg-8 col-xs-12 right">
+            
+            <div id="chatImgbody" class="d-none col-lg-8 col-xs-12 right">
                 <div class="row icons user-info-right">
                 <div class="row d-flex flex-row align-items-center p-2 m-0 w-100" id="navbar">
 					<div class="d-block d-sm-none" onclick="showContactPanel();">
@@ -83,9 +85,10 @@
                         <span style="padding-left:0px; margin-right:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-smile"></i></span>
                     </div>
                     <div class="input-box">
-                        <input id="inputMsg" type="text" class="form-control" placeholder="Type a message" onKeyUp="flipControl(this);">
+                        <input id="inputMsg1" type="text" class="form-control" placeholder="Type a message" onKeyUp="flipControl(this);">
                     </div>
                     <div>
+                    	<input id="attach" type="file" multiple accept='image/*' style="display:none;">
                     	<span style="margin-left:10px;cursor:pointer;" onclick="callAttach();"><i class="fas fa-paperclip"></i></span>
                     </div>
                     <div>
@@ -103,7 +106,7 @@
             </div>
 			<div id="chgProfile" class="d-none col-lg-4 col-xs-12 left">
 	            <div class="row icons d-flex justify-content-end profile-section-top">
-	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome();"><i class="fas fa-arrow-left text-white"></i></div>
+	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome('#chgProfile');"><i class="fas fa-arrow-left text-white"></i></div>
 				  <div class="mr-auto p-2 profile-section-top-text">Profile</div>
 				  <div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doRegister();"><i class="fas fa-check text-white"></i></div>
 				</div>
@@ -138,8 +141,120 @@
                         </div>
                     </div>
                 </div>
-            </div>            
-            <div id="chatads" class="d-none d-sm-block col-lg-8 right">
+            </div>
+			<div id=newGrpPanel class="d-none col-lg-4 col-xs-12 left">
+	            <div class="row icons d-flex justify-content-end profile-section-top">
+	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doBackCreate();"><i class="fas fa-arrow-left text-white"></i></div>
+				  <div class="mr-auto p-2 profile-section-top-text">New Group</div>
+				  <div class="p-2 profile-section-top-text cursor-class"><i class="fas fa-search text-white"></i></div>
+				</div>
+                <div class="row profile-section-info">
+                    <div class="container-group">
+                        <div class="row push-down">
+                        	<input type="file" id="group-pic-input" class="d-none">
+                        	<img id="groupPic" src="../img/profile-img-new.PNG" class="rounded-circle circled-image">
+                            <input type="text" id="group_name" placeholder="Type Group Name/Subject"></input>
+                            <span><i class="fas fa-smile"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row profile-section-warning">
+                    <span>This is not your username or pin. This name will be visible to your WhatsApp contacts.</span>
+                </div>				
+				<div class="row recent-chats">
+                    <div class="col-12">
+                            <ul class="list-group-contacts"></ul>
+                    </div>
+                </div>
+            </div>           
+			<div id="allContactsPanel" class="d-none col-lg-4 col-xs-12 left">
+	            <div class="row icons d-flex justify-content-end profile-section-top">
+	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome('#allContactsPanel');"><i class="fas fa-arrow-left text-white"></i></div>
+				  <div class="mr-auto p-2 profile-section-top-text">Select Contact</div>
+				  <div class="p-2 profile-section-top-text cursor-class"><i class="fas fa-search text-white"></i></div>
+				  <div class="p-2 profile-section-top-text cursor-class" data-toggle="dropdown"><i class="fas fa-ellipsis-v text-white"></i></div>
+				  <div class="dropdown-menu dropdown-menu-right">
+							<a class="dropdown-item" href="#">Invite a Friend</a>
+							<a class="dropdown-item" href="#">Contacts</a>
+							<a class="dropdown-item" href="#">Refresh</a>
+							<a class="dropdown-item" href="#">Help</a>
+						</div>
+				</div>
+				<div class="row recent-chats">
+                    <div class="col-12">
+                            <ul class="list-contacts"></ul>
+                    </div>
+                </div>
+            </div> 
+			<div id="createGroupPanel" class="d-none col-lg-4 col-xs-12 left">
+	            <div class="row icons d-flex justify-content-end profile-section-top">
+	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doAllContacts();"><i class="fas fa-arrow-left text-white"></i></div>
+				  <div class="mr-auto p-2 profile-section-top-text">Create Group</div>
+				  <div class="p-2 profile-section-top-text cursor-class"><i class="fas fa-search text-white"></i></div>
+				</div>
+				<div class="row recent-chats">
+                    <div class="col-12">
+                            <ul class="list-select-contacts">
+                                    </ul>
+                    </div>
+                </div>
+            </div>
+			<div id="chatbody" class="d-none col-lg-8 col-xs-12 right">
+                <div class="row icons user-info-right">
+                <div class="row d-flex flex-row align-items-center p-2 m-0 w-100" id="navbar">
+					<div class="d-block d-sm-none" onclick="showContactPanel('#chatbody');">
+						<i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;"></i>
+					</div>
+					<a href="#"><img id="contactPhoto2" src="../img/profile-img.PNG" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></a>
+					<div class="d-flex flex-column">
+						<div class="text-white font-weight-bold" id="contactName2">Dee</div>
+						<div class="text-white small" id="details">at 5:28 PM</div>
+					</div>
+					
+					<div class="d-flex flex-row align-items-center ml-auto">
+						<span href="#"><i class="fas fa-phone mx-3 text-white d-md-block"></i></span>
+						<span href="#"><i class="fas fa-video mx-3 text-white d-md-block"></i></span>
+						<span href="#" data-toggle="dropdown"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></span>
+						<div id="chatMenu" class="dropdown-menu dropdown-menu-right">
+							<!-- <a class="dropdown-item" href="#">New Group</a>
+							<a class="dropdown-item" href="#">Archived</a>
+							<a class="dropdown-item" href="#">Starred</a>
+							<a class="dropdown-item" href="#">Settings</a>
+							<a class="dropdown-item" href="#">Log Out</a> -->
+						</div>
+					</div>
+				</div>
+					<span id="chatId" style="display:none;">Vipin</span>
+                </div>
+                <div class="container" style="width: 103%;">
+                	<div class="chat-window"></div>
+                </div>
+                <div class="row icons enter-chat">
+                    <div class="cursor-class" style="padding-left:0px;">
+                        <!-- <img src="../img/emoji.PNG"> -->
+                        <span style="padding-left:0px; margin-right:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-smile"></i></span>
+                    </div>
+                    <div class="input-box">
+                        <input id="inputMsg" type="text" class="form-control" placeholder="Type a message" onKeyUp="flipControl(this);">
+                    </div>
+                    <div>
+                    	<input id="attach" type="file" multiple accept='image/*' style="display:none;">
+                    	<span style="margin-left:10px;cursor:pointer;" onclick="callAttach();"><i class="fas fa-paperclip"></i></span>
+                    </div>
+                    <div>
+                    	<span style="margin-left:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-camera"></i></span>
+                    </div>
+                    <div>
+                    	<span>&nbsp;</span>
+                    </div>
+                    <div>
+                    	<span style="margin-left:10px;cursor:pointer;" onclick="sendMessage();"><i id="inputControl" class="fas fa-microphone"></i></span>
+                    	<!-- <span style="margin-left:10px;"><i class="fas fa-paper-plane"></i></span> -->
+                        <!-- <img src="../img/voice-input.PNG"> -->
+                    </div>
+                </div>
+            </div>                                              
+            <div id="chatads" class="d-sm-block col-lg-8 right">
             	<div class="text-center" style="margin:10px;">
                     <img src="../img/watsapp-only.PNG" alt="">
                     <p class="main-text font-weight-light">Keep your phone connected</p>
@@ -164,7 +279,7 @@
 	        <span class="fa fa-spinner fa-spin fa-3x w-100"></span>
 	    </div>
 	</div>
-	<div class="fab"> <i class="fas fa-comment"></i></div>
+	<div class="fab"> <i onclick="fabCallback(this);" class="fas fa-comment"></i></div>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="jquery-3.2.1.slim.min.js"></script>
@@ -176,6 +291,8 @@
 	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-auth.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-database.js"></script>
 	<script src="https://momentjs.com/downloads/moment.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.4/croppie.min.js"></script>
+	
 	<script src="js/apputil.js"></script>
 	
 	<script src="data/friendship-d566b-chat_contacts-export.js"></script>
