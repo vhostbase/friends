@@ -180,7 +180,10 @@ hr{
 	height:99%;
 }
 
-
+#navbar1{
+	background: #009688;
+	height:99%;
+}
 /* Profile Start */
 .profile-section-top-text{
     margin: 10px;
@@ -232,3 +235,6 @@ hr{
     color : #929fa6;
 }
 /* Profile End */
+.blackBg{
+	background-color: blue !important;
+}

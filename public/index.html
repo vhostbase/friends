@@ -54,56 +54,7 @@
                 </div>
             </div>
             
-            <div id="chatImgbody" class="d-none col-lg-8 col-xs-12 right">
-                <div class="row icons user-info-right">
-                <div class="row d-flex flex-row align-items-center p-2 m-0 w-100" id="navbar">
-					<div class="d-block d-sm-none" onclick="showContactPanel();">
-						<i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;" onclick="showContactPanel()"></i>
-					</div>
-					<a href="#"><img id="contactPhoto2" src="../img/profile-img.PNG" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></a>
-					<div class="d-flex flex-column">
-						<div class="text-white font-weight-bold" id="contactName2">Dee</div>
-						<div class="text-white small" id="details">at 5:28 PM</div>
-					</div>
-					
-					<div class="d-flex flex-row align-items-center ml-auto">
-						<a href="#"><i class="fas fa-phone mx-3 text-white d-md-block"></i></a>
-						<a href="#"><i class="fas fa-video mx-3 text-white d-md-block"></i></a>
-						<!-- <a href="#"><i class="fas fa-search mx-3 text-white d-md-block"></i></a>
-						<a href="#"><i class="fas fa-paperclip mx-3 text-white d-md-block"></i></a> -->
-						<a href="#"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></a>
-					</div>
-				</div>
-					<span id="chatId" style="display:none;">Vipin</span>
-                </div>
-                <div class="container" style="width: 103%;">
-                	<div class="chat-window"></div>
-                </div>
-                <div class="row icons enter-chat">
-                    <div class="cursor-class" style="padding-left:0px;">
-                        <!-- <img src="../img/emoji.PNG"> -->
-                        <span style="padding-left:0px; margin-right:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-smile"></i></span>
-                    </div>
-                    <div class="input-box">
-                        <input id="inputMsg1" type="text" class="form-control" placeholder="Type a message" onKeyUp="flipControl(this);">
-                    </div>
-                    <div>
-                    	<input id="attach" type="file" multiple accept='image/*' style="display:none;">
-                    	<span style="margin-left:10px;cursor:pointer;" onclick="callAttach();"><i class="fas fa-paperclip"></i></span>
-                    </div>
-                    <div>
-                    	<span style="margin-left:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-camera"></i></span>
-                    </div>
-                    <div>
-                    	<span>&nbsp;</span>
-                    </div>
-                    <div>
-                    	<span style="margin-left:10px;cursor:pointer;" onclick="sendMessage();"><i id="inputControl" class="fas fa-microphone"></i></span>
-                    	<!-- <span style="margin-left:10px;"><i class="fas fa-paper-plane"></i></span> -->
-                        <!-- <img src="../img/voice-input.PNG"> -->
-                    </div>
-                </div>
-            </div>
+            
 			<div id="chgProfile" class="d-none col-lg-4 col-xs-12 left">
 	            <div class="row icons d-flex justify-content-end profile-section-top">
 	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome('#chgProfile');"><i class="fas fa-arrow-left text-white"></i></div>
@@ -201,30 +152,27 @@
             </div>
 			<div id="chatbody" class="d-none col-lg-8 col-xs-12 right">
                 <div class="row icons user-info-right">
+                <span id="chatId" style="display:none;">Vipin</span>
                 <div class="row d-flex flex-row align-items-center p-2 m-0 w-100" id="navbar">
-					<div class="d-block d-sm-none" onclick="showContactPanel('#chatbody');">
+                
+<!-- 					<div class="d-block d-sm-none" onclick="showContactPanel('#chatbody');">
 						<i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;"></i>
 					</div>
-					<a href="#"><img id="contactPhoto2" src="../img/profile-img.PNG" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></a>
+					<span><img id="contactPhoto2" src="../img/profile-img.PNG" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></span>
 					<div class="d-flex flex-column">
 						<div class="text-white font-weight-bold" id="contactName2">Dee</div>
 						<div class="text-white small" id="details">at 5:28 PM</div>
 					</div>
 					
 					<div class="d-flex flex-row align-items-center ml-auto">
-						<span href="#"><i class="fas fa-phone mx-3 text-white d-md-block"></i></span>
-						<span href="#"><i class="fas fa-video mx-3 text-white d-md-block"></i></span>
-						<span href="#" data-toggle="dropdown"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></span>
-						<div id="chatMenu" class="dropdown-menu dropdown-menu-right">
-							<!-- <a class="dropdown-item" href="#">New Group</a>
-							<a class="dropdown-item" href="#">Archived</a>
-							<a class="dropdown-item" href="#">Starred</a>
-							<a class="dropdown-item" href="#">Settings</a>
-							<a class="dropdown-item" href="#">Log Out</a> -->
+						<span class="cursor-class"><i class="fas fa-phone mx-3 text-white d-md-block"></i></span>
+						<span class="cursor-class"><i class="fas fa-video mx-3 text-white d-md-block"></i></span>
+						<span class="cursor-class" data-toggle="dropdown"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></span>
+						<div id="chatMenu" class="dropdown-menu dropdown-menu-right cursor-class">
 						</div>
-					</div>
+					</div> -->
 				</div>
-					<span id="chatId" style="display:none;">Vipin</span>
+					
                 </div>
                 <div class="container" style="width: 103%;">
                 	<div class="chat-window"></div>
@@ -238,7 +186,7 @@
                         <input id="inputMsg" type="text" class="form-control" placeholder="Type a message" onKeyUp="flipControl(this);">
                     </div>
                     <div>
-                    	<input id="attach" type="file" multiple accept='image/*' style="display:none;">
+                    	<input id="attachImg" type="file" multiple accept='image/*' style="display:none;">
                     	<span style="margin-left:10px;cursor:pointer;" onclick="callAttach();"><i class="fas fa-paperclip"></i></span>
                     </div>
                     <div>
@@ -248,12 +196,64 @@
                     	<span>&nbsp;</span>
                     </div>
                     <div>
-                    	<span style="margin-left:10px;cursor:pointer;" onclick="sendMessage();"><i id="inputControl" class="fas fa-microphone"></i></span>
+                    	<span style="margin-left:10px;cursor:pointer;" hover="recordVoice();" onclick="sendTxtMessage(this);"><i id="inputControl" class="fas fa-microphone"></i></span>
                     	<!-- <span style="margin-left:10px;"><i class="fas fa-paper-plane"></i></span> -->
                         <!-- <img src="../img/voice-input.PNG"> -->
                     </div>
                 </div>
-            </div>                                              
+            </div>  
+            <div id="chatImgbody" class="d-none col-lg-8 col-xs-12 right">
+                <div class="row icons user-info-right">
+                <div class="row d-flex flex-row align-items-center p-2 m-0 w-100" id="navbar">
+					<div class="d-block d-sm-none" onclick="showContactPanel();">
+						<i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;" onclick="showContactPanel()"></i>
+					</div>
+					<a href="#"><img id="contactPhoto2" src="../img/profile-img.PNG" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></a>
+					<div class="d-flex flex-column">
+						<div class="text-white font-weight-bold" id="contactName2">Dee</div>
+						<div class="text-white small" id="details">at 5:28 PM</div>
+					</div>
+					
+					<div class="d-flex flex-row align-items-center ml-auto">
+						<a href="#"><i class="fas fa-phone mx-3 text-white d-md-block"></i></a>
+						<a href="#"><i class="fas fa-video mx-3 text-white d-md-block"></i></a>
+						<!-- <a href="#"><i class="fas fa-search mx-3 text-white d-md-block"></i></a>
+						<a href="#"><i class="fas fa-paperclip mx-3 text-white d-md-block"></i></a> -->
+						<a href="#"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></a>
+					</div>
+				</div>
+					<span id="chatId" style="display:none;">Vipin</span>
+                </div>
+                <div class="container" style="width: 103%;">
+                	<div class="chat-window">
+                		<img id="imgMsg">
+                	</div>
+                </div>
+                <div class="row icons enter-chat">
+                    <div class="cursor-class" style="padding-left:0px;">
+                        <!-- <img src="../img/emoji.PNG"> -->
+                        <span style="padding-left:0px; margin-right:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-smile"></i></span>
+                    </div>
+                    <div class="input-box">
+                        <input id="inputMsg1" type="text" class="form-control" placeholder="Type a message" onKeyUp="flipControl(this);">
+                    </div>
+                    <!-- <div>
+                    	<input id="attach" type="file" multiple accept='image/*' style="display:none;">
+                    	<span style="margin-left:10px;cursor:pointer;" onclick="callAttach();"><i class="fas fa-paperclip"></i></span>
+                    </div> -->
+                    <!-- <div>
+                    	<span style="margin-left:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-camera"></i></span>
+                    </div> -->
+                    <div>
+                    	<span>&nbsp;</span>
+                    </div>
+                    <div>
+                    	<span style="margin-left:10px;cursor:pointer;" onclick="sendImgMessage();"><i id="inputImgControl" class="fas fa-paper-plane"></i></span>
+                    	<!-- <span style="margin-left:10px;"><i class="fas fa-paper-plane"></i></span> -->
+                        <!-- <img src="../img/voice-input.PNG"> -->
+                    </div>
+                </div>
+            </div>                                            
             <div id="chatads" class="d-sm-block col-lg-8 right">
             	<div class="text-center" style="margin:10px;">
                     <img src="../img/watsapp-only.PNG" alt="">
@@ -280,17 +280,18 @@
 	    </div>
 	</div>
 	<div class="fab"> <i onclick="fabCallback(this);" class="fas fa-comment"></i></div>
+		
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="jquery-3.2.1.slim.min.js"></script>
+    <script src="jquery/jquery-3.2.1.slim.min.js"></script>
     <!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script> -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
 <!--     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script> -->
  	<script src="bootstrap/4.0.0/js/bootstrap.min.js"></script>
  	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-auth.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-database.js"></script>
-	<script src="https://momentjs.com/downloads/moment.js"></script>
+	<script src="moment/moment.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.4/croppie.min.js"></script>
 	
 	<script src="js/apputil.js"></script>

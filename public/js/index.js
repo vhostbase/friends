@@ -29,7 +29,7 @@ function loadGroupContacts(contact){
 }
 function loadContactTemplate(contact, onClickEvent, msgDate, msgCount){
 	if(!contact.pic || contact.pic.indexOf('img/profile-img') > -1)
-		contact.pic = '../img/profile-img.png';
+		contact.pic = getDefaultPhoto();
 	let contactHtml = '';
 	if(contact.event)
 		contactHtml += '<span class="cursor-class" '+contact.event+'>';
@@ -61,15 +61,30 @@ function loadContactTemplate(contact, onClickEvent, msgDate, msgCount){
 }
 //$('#chatbody').hide();
 function showChat(event, id){
+	var selectChat = event.find('li');
+	if(!selectChat.hasClass('chat-select')){
+		selectChat.addClass('chat-select');
+	}
 	var pic = event.find('img').attr('src');
 	var name = event.find('.user-name').text();
 	var info = event.find('#info').text();
 	showChat2(pic, name, id, info);
 	showContactChat();
 }
+function addChatHeader(pic, name){
+	var hdrHtml = '';
+	hdrHtml += '<div class="d-block d-sm-none" onclick="showContactPanel(\'#chatbody\');"><i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;"></i></div>';
+	hdrHtml += '<span><img id="contactPhoto2" src="'+pic+'" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></span>';
+	hdrHtml += '<div class="d-flex flex-column"><div class="text-white font-weight-bold" id="contactName2">'+name+'</div><div class="text-white small" id="details">at 5:28 PM</div></div>';
+	hdrHtml += '<div class="d-flex flex-row align-items-center ml-auto"><span class="cursor-class"><i class="fas fa-phone mx-3 text-white d-md-block"></i></span><span class="cursor-class"><i class="fas fa-video mx-3 text-white d-md-block"></i></span><span class="cursor-class" data-toggle="dropdown"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></span><div id="chatMenu" class="dropdown-menu dropdown-menu-right cursor-class"></div></div>';
+	return $(hdrHtml);
+}
 function showChat2(pic, name, id, info){
-	$('#chatbody #contactPhoto2').attr('src', pic);
-	$('#chatbody #contactName2').text(name);
+	$('#chatbody #navbar').empty();
+	var chatHdr = addChatHeader(pic, name);
+	$('#chatbody #navbar').append(chatHdr);
+	//$('#chatbody #contactPhoto2').attr('src', pic);
+	//$('#chatbody #contactName2').text(name);
 	$('#chatbody #chatId').val(id);
 	if(info === 'group'){
 		$('#chatbody #chatMenu').empty();
@@ -85,6 +100,7 @@ function getContactChatMenuTemplate(){
 	var template = '';
 	template += '<span class="dropdown-item">View Contact</span>';
 	template += '<span class="dropdown-item">Search</span>';
+	template += '<span class="dropdown-item">Change Wallpaper</span>';
 	template += '<span class="dropdown-item">Clear Chat</span>';
 	return template;
 }
@@ -169,6 +185,36 @@ function showProfilePanel2(){
 function getFormattedDate(dateTime, format){
 	return moment(dateTime).format(format);
 }
+function removeMsg(event){
+	var ids = $($($(event).parent).parent).find('#rm-list span');
+	for(var idx=0; idx<ids.length; idx++){
+		var msgId = ids[idx];
+		var elem = $('#chatbody .chat-window').find('#'+$(msgId).text());
+		elem.remove();
+		var selected = $('.list-chats').find('.chat-select');
+		if(selected.length > 0){
+			var pic = selected.find('#contactPhoto').attr('src');
+			var name = selected.find('.user-name span').text();
+			$('#chatbody #navbar').empty();
+			var chatHdr = addChatHeader(pic, name);
+			$('#chatbody #navbar').append(chatHdr);
+		}
+	}
+	console.log('Hi');
+}
+function addChatDelHeader(id){
+	var hdrHtml = '';
+	hdrHtml += '<div class="d-block d-sm-none" onclick="showContactPanel(\'#chatbody\');"><i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;"></i></div>';
+	hdrHtml += '<div id="rm-count" class="text-white font-weight-bold">1</div>';
+	hdrHtml += '<div id="rm-list" style="display:none"><span>'+id+'</span></div>';
+	hdrHtml += '<div class="d-flex flex-row align-items-center ml-auto">';
+	hdrHtml += '<span class="cursor-class"><i class="fas fa-arrow-circle-left mx-3 text-white d-md-block"></i></span>';
+	hdrHtml += '<span class="cursor-class" onclick="removeMsg(this)"><i class="fas fa-trash mx-3 text-white d-md-block"></i></span>';
+	hdrHtml += '<span class="cursor-class"><i class="fas fa-copy mx-3 text-white d-md-block"></i></span>';
+	hdrHtml += '<span class="cursor-class"><i class="fas fa-arrow-circle-right mx-3 text-white d-md-block"></i></span>';
+	hdrHtml += '</div>';
+	return $(hdrHtml);
+}
 function addLeftChat(chatData){
 	var elem = $('#chatbody .chat-window').find('#'+chatData.msgDateTime);
 	if(elem.length > 0)
@@ -176,11 +222,29 @@ function addLeftChat(chatData){
 	var msgTime = moment(new Date(chatData.msgDateTime)).format('hh:mm A');
 	var chatHtml = '';
 	chatHtml += '<div id="'+chatData.msgDateTime+'" class="row user-chat"><div class="msg chat-item-left"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
-	chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
+	if(chatData.type === 'image')
+		chatHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+chatData.mediaData+'"></div><div><span>'+chatData.messageText+'</span></div></div>';
+	else if(chatData.type === 'audio')
+		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><audio controls><source src="'+chatData.mediaData+'" type="audio/*"></audio></div></div>';
+	else if(chatData.type === 'video')
+		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video controls><source src="'+chatData.mediaData+'" type="video/*"></video></div></div>';
+	else
+		chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
 	chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">';
 	chatHtml += msgTime;
 	chatHtml += '</div></div></div></div>';
 	$('#chatbody .chat-window').append($(chatHtml));
+	$('#chatbody .chat-window #'+chatData.msgDateTime).bind("contextmenu", function (event) {
+      fireContextMenu(event);
+    });
+}
+function onSelectMsg(event){
+	if($('#chatbody .chat-window').attr('msg-select')){
+		$('#chatbody .chat-window #'+event.id).toggleClass('blackBg');
+		$('#chatbody #rm-list').append($('<span>'+event.id+'</span>'));
+		var count = ($('#chatbody #rm-list span').length);
+		$('#chatbody #rm-count').text(count);
+	}
 }
 function addRightChat(chatData){
 	var elem = $('#chatbody .chat-window').find('#'+chatData.msgDateTime);
@@ -188,12 +252,33 @@ function addRightChat(chatData){
 		return;
 	var msgTime = moment(new Date(chatData.msgDateTime)).format('hh:mm A');
 	var chatHtml = '';
-	chatHtml += '<div id="'+chatData.msgDateTime+'" class="row my-chat"><div class="msg chat-item-right"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
-	chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
+	chatHtml += '<div id="'+chatData.msgDateTime+'" class="row my-chat" onclick="onSelectMsg(this)"><div class="msg chat-item-right"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
+	if(chatData.type === 'image')
+		chatHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+chatData.mediaData+'"></div><div><span>'+chatData.messageText+'</span></div></div>';
+	else if(chatData.type === 'audio')
+		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><audio controls><source src="'+chatData.mediaData+'" type="audio/mpeg"></audio></div></div>';
+	else if(chatData.type === 'video')
+		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video controls><source src="'+chatData.mediaData+'" type="video/*"></video></div></div>';
+	else
+		chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
+
+	
+	//chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
 	chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">';
 	chatHtml += msgTime;
 	chatHtml += '</div></div></div></div>';
 	$('#chatbody .chat-window').append($(chatHtml));
+	$('#chatbody .chat-window #'+chatData.msgDateTime).bind("contextmenu", function (event) {      
+		fireContextMenu(event);
+    });
+}
+function fireContextMenu(event){
+	$('#chatbody #navbar').empty();
+	var chatHdr = addChatDelHeader(event.currentTarget.id);
+	$('#chatbody #navbar').append(chatHdr);
+    event.preventDefault();
+	$('#chatbody .chat-window').attr('msg-select', '1');
+	$('#chatbody .chat-window #'+event.currentTarget.id).addClass('blackBg');
 }
 function addDateForChat(lblDate){
 	var lblDateKey = lblDate;
@@ -219,30 +304,34 @@ function flipControl(event){
 	}
 }
 
-function sendMessage(){
+function sendMessage(txtData, imgData, type){
 	addDateForChat('TODAY');
 	var msgDate = new Date();
 	var today = moment(msgDate).format('hh:mm A');
 	var msgTime = msgDate.getTime();
-
-	var data = $('#inputMsg').val();
-	$('#inputMsg').val("");
-	flipControl({value : ''});
 	var msgHtml = '';
 	msgHtml += '<div class="row my-chat"><div class="msg chat-item-right"><div class="d-flex flex-row">';
 	msgHtml += '<div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
-	msgHtml += '<div class="body m-1 mr-2"><span>'+data+'</span></div>';
+	if(type){
+		msgHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+imgData+'"></div><div><span>'+txtData+'</span></div></div>';
+	}else
+		msgHtml += '<div class="body m-1 mr-2"><span>'+txtData+'</span></div>';
+
 	msgHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;"><span>'+today+'</span><i id="'+msgTime+'" style="display:none;" class="fas fa-check"></i></div></div></div></div>';
-	$('.chat-window').append($(msgHtml));
+	$('#chatbody .chat-window').append($(msgHtml));
 
 	var id = $('#chatId').val();
 	var currId = $('#currentId').val();
 	var messageData = {};
-	messageData.messageText = data;
+	messageData.messageText = txtData;
 	messageData.to = id;
 	messageData.from = currId;
 	messageData.type='text';
 	messageData.msgDateTime = msgTime;
+	if(type){
+		messageData.type=type;
+		messageData.mediaData = imgData;
+	}
 	//console.log(messageData);
 	var source = 'chat_messages';
 	var database = firebase.database();
@@ -253,8 +342,8 @@ function sendMessage(){
 		$('#'+snapshot.key).show();
 	});
 	insertRef.set(messageData);
-	database.ref('chat_contacts/'+currId).update({'lastMsg':data});
-	database.ref('chat_contacts/'+id).update({'lastMsg':data});
+	database.ref('chat_contacts/'+currId).update({'lastMsg':txtData});
+	database.ref('chat_contacts/'+id).update({'lastMsg':txtData});
 }
 function showEmoji(){
 	$('.emoji-menu').show();
@@ -308,7 +397,51 @@ function createGroup(){
 	changFab('fa-comment', 'fa-arrow-right');
 }
 function callAttach(){
-	$('#attach').click();
+	$('#attachImg').attr('accept', 'audio/*,video/*,image/*');
+	$('#attachImg').click();
+}
+$('#chatbody #attachImg').change(function(event){
+	var file = event.target.files[0];
+	var fileType = file.type;
+	var msgType = fileType.substr(0, fileType.indexOf('/'))
+	var image = $('#chatImgbody #imgMsg');
+	image.attr('src', '');
+	var reader = new FileReader();
+	reader.onloadend = function() {
+		if(msgType === 'image'){
+			image.attr('src', reader.result);
+			 $('#chatImgbody').removeClass('d-none');
+			 $('#chatbody').addClass('d-none');
+		}else{
+			sendMessage('media', reader.result, msgType);
+		}
+	}
+
+	reader.readAsDataURL(file);
+});
+function takePhoto(){
+	$('#attachImg').attr('accept', 'image/*;capture=camera');
+	$('#attachImg').click();
+}
+function recordVoice(){
+	$('#attachImg').attr('accept', 'audio/*;capture=microphone');
+	$('#attachImg').click();
+}
+function sendTxtMessage(event){
+	if($('#inputControl').hasClass('fa-microphone')){
+		recordVoice();
+	}else{
+		var txtData = $('#inputMsg').val();
+		$('#inputMsg').val("");
+		flipControl({value : ''});
+		sendMessage(txtData);
+	}
+}
+function sendImgMessage(){
+	$('#chatImgbody').addClass('d-none');
+	$('#chatbody').removeClass('d-none');
+	sendMessage($('#inputMsg1').val(), $('#chatImgbody #imgMsg').attr('src'), 'image');
+	$('#inputMsg1').val('');
 }
 function onSelectContact(event){
 	var control = $(event).find('i');
