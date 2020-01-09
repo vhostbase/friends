@@ -43,7 +43,7 @@ $(document).on("click", "#mainDiv", function(){
 /*function doHome(){
 	window.location.href="../chats/index.html";
 }*/
-function doRegister(){
+function doChgRegister(){
 	adjustFileds();
 	var userName = localStorage.getItem("userName");
 	var currentUser = firebase.auth().currentUser;
@@ -141,4 +141,42 @@ function createGroupProfile(callback){
 		callback();
 	});
 	insertRef.set(userData);
+}
+function showRegister(){
+	$('.fab').hide();
+	$('#mainDiv').removeClass('d-none');
+	$('#chatads').addClass('d-none');
+}
+function doEditMobile(){
+	$('#lbl_contact_nbr').hide();
+	$('#contact_nbr').show();
+	$('#contact_nbr').focus();
+}
+function doRegister(){
+	adjustContactNbr();
+	var userName = $('#lbl_contact_nbr').text();
+	auth.createUserWithEmailAndPassword(userName+'@gmail.com', 'Test@123').then(function(response){
+		var currentUser = response.user;
+	}).catch(function(error) {
+		if(error.code === "auth/email-already-in-use"){
+			$('#mainDiv').addClass('d-none');
+			localStorage.setItem("userName", userName);
+			initAuth();
+		}
+		console.log(error);
+	});
+	
+}
+
+$(document).on("click", "#mainDiv", function(){
+	adjustContactNbr();
+});
+function adjustContactNbr(){
+	var contactNbr = $('#contact_nbr').val();
+	if(contactNbr){
+		$('#lbl_contact_nbr').text(contactNbr);
+		$('#lbl_contact_nbr').show();
+		$('#contact_nbr').hide();
+		$('#contact_nbr').val(null);
+	}
 }

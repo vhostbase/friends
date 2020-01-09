@@ -238,3 +238,7 @@ hr{
 .blackBg{
 	background-color: blue !important;
 }
+#mainDiv{
+	margin-left: 10px;
+    margin-right: 10px;
+}

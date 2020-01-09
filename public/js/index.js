@@ -24,8 +24,14 @@ function loadContacts(contact){
 	$('.list-contacts').append($(contactHtml));
 }
 function loadGroupContacts(contact){
-	var contactHtml = loadContactTemplate(contact, 'onclick="onSelectContact(this);"', '<span id="CID" style="display:none;">'+contact.id+'</span><i class="d-none fas fa-check-circle"></i>');
-	$('.list-select-contacts').append($(contactHtml));
+	if(contact.members){
+		var currentUser = auth.currentUser;
+		var isGroup = contact.members.indexOf(currentUser.uid);
+		if(isGroup){
+			var contactHtml = loadContactTemplate(contact, 'onclick="onSelectContact(this);"', '<span id="CID" style="display:none;">'+contact.id+'</span><i class="d-none fas fa-check-circle"></i>');
+			$('.list-select-contacts').append($(contactHtml));
+		}
+	}
 }
 function loadContactTemplate(contact, onClickEvent, msgDate, msgCount){
 	if(!contact.pic || contact.pic.indexOf('img/profile-img') > -1)
@@ -117,14 +123,15 @@ function showContactChat(){
 	$('#chatbody .chat-window').css('overflow-y', 'hidden');
 	var id = $('#chatbody #chatId').val();
 	showChatPanel();
-	var currentUser = auth.currentUser;
-	var today = getFormattedDate(new Date(), 'MMM DD, YYYY');
+	/*var currentUser = auth.currentUser;
+	var today = getFormattedDate(new Date(), 'MMM DD, YYYY');*/
 	var database = firebase.database();
-	database.ref('chat_messages').on('value', function(snapshot){
+
+	database.ref('chat_messages').orderByKey().on('value', function(snapshot){
 		var chatItem = snapshot.val();
 		if(!chatItem)
 			return;
-		var chatList = [];
+		/*var chatList = [];
 		for (const [key, value] of Object.entries(chatItem)) {
 			if((value.from === id && value.to === currentUser.uid) || (value.to === id && value.from === currentUser.uid))
 				chatList.push(value);
@@ -145,9 +152,28 @@ function showContactChat(){
 				addRightChat(item);
 			  else
 				addLeftChat(item);
-		});	
-		$(".chat-window").scrollTop($(".chat-window")[0].scrollHeight);
+			  $(".chat-window").scrollTop($(".chat-window")[0].scrollHeight);
+		});	*/
+		var currentUser = auth.currentUser;
+		var today = getFormattedDate(new Date(), 'MMM DD, YYYY');
+		for (const [key, value] of Object.entries(chatItem)) {
+			addChatMessage(value, today, currentUser);
+		}
 	});
+}
+function addChatMessage(item, today, currentUser){
+	addScrollBar();
+	var msgDate = getFormattedDate(new Date(item.msgDateTime), 'MMM DD, YYYY');
+	  if(new Date(today).getTime() === new Date(msgDate).getTime()){
+		msgDate = 'TODAY';
+	  }
+		addDateForChat(msgDate);
+	  
+	  if(currentUser.uid === item.from)
+		addRightChat(item);
+	  else
+		addLeftChat(item);
+	  $(".chat-window").scrollTop($(".chat-window")[0].scrollHeight);
 }
 function detectmob() {
    if(window.innerWidth <= 600 && window.innerHeight <= 800) {
@@ -222,12 +248,12 @@ function addLeftChat(chatData){
 	var msgTime = moment(new Date(chatData.msgDateTime)).format('hh:mm A');
 	var chatHtml = '';
 	chatHtml += '<div id="'+chatData.msgDateTime+'" class="row user-chat"><div class="msg chat-item-left"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
-	if(chatData.type === 'image')
+	if(chatData.type.indexOf('image') > -1)
 		chatHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+chatData.mediaData+'"></div><div><span>'+chatData.messageText+'</span></div></div>';
-	else if(chatData.type === 'audio')
-		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><audio controls><source src="'+chatData.mediaData+'" type="audio/*"></audio></div></div>';
-	else if(chatData.type === 'video')
-		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video controls><source src="'+chatData.mediaData+'" type="video/*"></video></div></div>';
+	else if(chatData.type.indexOf('audio') > -1)
+		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><audio controls><source src="'+chatData.mediaData+'" type="'+chatData.type+'"></audio></div></div>';
+	else if(chatData.type.indexOf('video') > -1)
+		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video width="400" controls><source src="'+chatData.mediaData+'" type="'+chatData.type+'"></video></div></div>';
 	else
 		chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
 	chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">';
@@ -253,12 +279,12 @@ function addRightChat(chatData){
 	var msgTime = moment(new Date(chatData.msgDateTime)).format('hh:mm A');
 	var chatHtml = '';
 	chatHtml += '<div id="'+chatData.msgDateTime+'" class="row my-chat" onclick="onSelectMsg(this)"><div class="msg chat-item-right"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
-	if(chatData.type === 'image')
+	if(chatData.type.indexOf('image') > -1)
 		chatHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+chatData.mediaData+'"></div><div><span>'+chatData.messageText+'</span></div></div>';
-	else if(chatData.type === 'audio')
-		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><audio controls><source src="'+chatData.mediaData+'" type="audio/mpeg"></audio></div></div>';
-	else if(chatData.type === 'video')
-		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video controls><source src="'+chatData.mediaData+'" type="video/*"></video></div></div>';
+	else if(chatData.type.indexOf('audio') > -1)
+		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><audio controls><source src="'+chatData.mediaData+'" type="'+chatData.type+'"></audio></div></div>';
+	else if(chatData.type.indexOf('video') > -1)
+		chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video width="400" controls><source src="'+chatData.mediaData+'" type="'+chatData.type+'"></video></div></div>';
 	else
 		chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
 
@@ -312,9 +338,11 @@ function sendMessage(txtData, imgData, type){
 	var msgHtml = '';
 	msgHtml += '<div class="row my-chat"><div class="msg chat-item-right"><div class="d-flex flex-row">';
 	msgHtml += '<div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
-	if(type){
+	if(type.indexOf('image') > -1)
 		msgHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+imgData+'"></div><div><span>'+txtData+'</span></div></div>';
-	}else
+	else if(type.indexOf('video') > -1)
+		msgHtml += '<div class="body m-1 mr-2"><video width="400" controls><source src="'+imgData+'" type="'+type+'"></video></div>';
+	else
 		msgHtml += '<div class="body m-1 mr-2"><span>'+txtData+'</span></div>';
 
 	msgHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;"><span>'+today+'</span><i id="'+msgTime+'" style="display:none;" class="fas fa-check"></i></div></div></div></div>';
@@ -333,15 +361,15 @@ function sendMessage(txtData, imgData, type){
 		messageData.mediaData = imgData;
 	}
 	//console.log(messageData);
-	var source = 'chat_messages';
+	var source = 'chat_messages/'+msgTime;
 	var database = firebase.database();
 	var insert = database.ref(source);
-	var insertRef = insert.push();
+	//var insertRef = insert.push();
 	insert.once('value', function(snapshot){
 		//console.log(snapshot.key);
 		$('#'+snapshot.key).show();
 	});
-	insertRef.set(messageData);
+	insert.set(messageData);
 	database.ref('chat_contacts/'+currId).update({'lastMsg':txtData});
 	database.ref('chat_contacts/'+id).update({'lastMsg':txtData});
 }
@@ -404,6 +432,9 @@ $('#chatbody #attachImg').change(function(event){
 	var file = event.target.files[0];
 	var fileType = file.type;
 	var msgType = fileType.substr(0, fileType.indexOf('/'))
+	if(msgType === 'video'){
+		uploadMedia(file, fileType);
+	}
 	var image = $('#chatImgbody #imgMsg');
 	image.attr('src', '');
 	var reader = new FileReader();
@@ -416,9 +447,37 @@ $('#chatbody #attachImg').change(function(event){
 			sendMessage('media', reader.result, msgType);
 		}
 	}
-
-	reader.readAsDataURL(file);
+	reader.readAsDataURL(file, msgType);
 });
+function uploadMedia(file, msgType){
+	var folder = 'ShareVideo/'+new Date().getTime()+'/'
+	var storageRef = firebase.storage().ref();
+	var mountainsRef = storageRef.child(folder+file.name);
+	var uploadTask = mountainsRef.put(file);
+	uploadTask.on('state_changed', function(snapshot){
+	  // Observe state change events such as progress, pause, and resume
+	  // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+	  var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+	  console.log('Upload is ' + progress + '% done');
+	  switch (snapshot.state) {
+		case firebase.storage.TaskState.PAUSED: // or 'paused'
+		  console.log('Upload is paused');
+		  break;
+		case firebase.storage.TaskState.RUNNING: // or 'running'
+		  console.log('Upload is running');
+		  break;
+	  }
+	}, function(error) {
+	  // Handle unsuccessful uploads
+	}, function() {
+	  // Handle successful uploads on complete
+	  // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+	  uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+		console.log('File available at', downloadURL);
+		sendMessage('media', downloadURL, msgType);
+	  });
+	});
+}
 function takePhoto(){
 	$('#attachImg').attr('accept', 'image/*;capture=camera');
 	$('#attachImg').click();

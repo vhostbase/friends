@@ -44,22 +44,26 @@ if(!isDebug){
 	}
 }
 var auth = firebase.auth();
-var loadContacts, addProfile, clearContacts, showContactPanel, loadChatContacts, loadGroupContacts;
+var loadContacts, addProfile, clearContacts, showContactPanel, loadChatContacts, loadGroupContacts, showRegister;
 let initAuth = () => {
-	block_screen();
+	//block_screen();
 	var register = localStorage.getItem("is_registration");
 	var userName = localStorage.getItem("userName");
 	if(!userName){
 		if(!register){
 			localStorage.setItem("is_registration", "y");
-			tharak.navigateUrl("../register/index.html");
+			if(showRegister)
+				showRegister();
+			//tharak.navigateUrl("../register/index.html");
 		}else{
 			var path = tharak.getCurrentPath();
 			if(path.indexOf('register/index.html') === -1){
-				tharak.navigateUrl("../register/index.html");
+				if(showRegister)
+					showRegister();
+				//tharak.navigateUrl("../register/index.html");
 			}
 		}
-		unblock_screen();
+		//unblock_screen();
 		return;
 	}
 	auth.signInWithEmailAndPassword(userName+'@gmail.com', 'Test@123').then(function(response){
@@ -79,10 +83,6 @@ let initAuth = () => {
 function loadSelfProfile(){
 	block_screen();
 	var currentUser = auth.currentUser;
-/*	if(isDebug){
-		loadContactData(chat_contacts, currentUser);
-		return;
-	}*/
 	var database = firebase.database();
 	database.ref('chat_contacts').once('value', function(snapshot){
 		var profileData = snapshot.val();
@@ -96,8 +96,10 @@ function loadContactData(profileData, currentUser){
 	if(showContactPanel)
 		showContactPanel();
 	var lastContact;
-	loadContacts({name:'New Group', event: 'onclick="createGroup();"'});
-	loadContacts({name:'New Contact'});
+	if(loadContacts){
+		loadContacts({name:'New Group', event: 'onclick="createGroup();"'});
+		loadContacts({name:'New Contact'});
+	}
 	for (const [key, value] of Object.entries(profileData)) {
 		if(currentUser.uid === key){
 			if(addProfile)

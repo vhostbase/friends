@@ -5,11 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.4/croppie.min.css" crossorigin="anonymous">
+
 
     <!-- Bootstrap CSS -->
     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" crossorigin="anonymous"> -->
-    <link rel="stylesheet" href="bootstrap/4.0.0/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
     <!-- My style -->
     <!-- <link rel="stylesheet" href="profile-page-style.css"> -->
     <link rel="stylesheet" href="chat-style.css">
@@ -59,7 +59,7 @@
 	            <div class="row icons d-flex justify-content-end profile-section-top">
 	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome('#chgProfile');"><i class="fas fa-arrow-left text-white"></i></div>
 				  <div class="mr-auto p-2 profile-section-top-text">Profile</div>
-				  <div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doRegister();"><i class="fas fa-check text-white"></i></div>
+				  <div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doChgRegister();"><i class="fas fa-check text-white"></i></div>
 				</div>
                 <div class="row profile-section-pic">
                 	<input type="file" id="profile-pic-input" class="d-none">
@@ -254,6 +254,30 @@
                     </div>
                 </div>
             </div>                                            
+
+            
+            <div class="d-none col-lg-4 col-xs-10 left" id="mainDiv">
+				<div class="row d-flex justify-content-end profile-section-top">
+				  <div class="mr-auto p-2 profile-section-top-text">Registration</div>
+				  <div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doRegister();"><i class="fas fa-check text-white"></i></div>
+				</div>            
+                <div class="row profile-section-info">
+                    <div class="container-group">
+                    </div>
+                </div>
+                <div class="row  profile-section-about">
+                    <div class="container-group">
+                        <div class="row">
+                            <span>Mobile</span>
+                        </div>
+                        <div class="row push-down">
+                            <span id="lbl_contact_nbr">Mobile Number</span>
+                            <input type="text" id="contact_nbr" style="display:none;"></input>
+                            <img src="../img/edit-icon.PNG" style="cursor:pointer;" onclick="doEditMobile();">
+                        </div>
+                    </div>
+                </div>
+            </div>  
             <div id="chatads" class="d-sm-block col-lg-8 right">
             	<div class="text-center" style="margin:10px;">
                     <img src="../img/watsapp-only.PNG" alt="">
@@ -270,7 +294,7 @@
                         </span>
                     </p>
                  </div>
-            </div>
+            </div>                      
             </div>
         </div>
     </div>
@@ -285,12 +309,13 @@
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="jquery/jquery-3.2.1.slim.min.js"></script>
     <!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script> -->
-    <script src="ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
 <!--     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script> -->
- 	<script src="bootstrap/4.0.0/js/bootstrap.min.js"></script>
+ 	<script src="bootstrap/4.4.1/js/bootstrap.min.js"></script>
  	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-auth.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-storage.js"></script>
 	<script src="moment/moment.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.4/croppie.min.js"></script>
 	
