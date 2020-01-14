@@ -1,38 +1,65 @@
-function addProfile(profileData){
-	$('#profile-pic')[0].src = profileData.pic;
-	$('#currentId').val(profileData.id);
-}
 function clearContacts(){
 	$('.list-chats').empty();
 	$('.list-contacts').empty();
 	$('.list-select-contacts').empty();
 }
-function loadChatContacts(contact){
-	if(contact.lastMsg || contact.members){
-		var today = getFormattedDate(new Date(), 'MMM DD, YYYY');
-		var msgDate = getFormattedDate(new Date(contact.lastSeen), 'MMM DD, YYYY');
-		if(new Date(today).getTime() === new Date(msgDate).getTime()){
-			msgDate = getFormattedDate(new Date(contact.lastSeen), 'mm:ss');
+function loadContactChat(message){
+	if(!message.from && message.to !== getCurrentUserId())
+		return;
+	tharak.getContact(message, null, function(results){
+		for(var idx=0; idx<results.rows.length; idx++){
+			var contact = results.rows.item(idx);
+			loadChatContacts2(contact, message);
 		}
-		var contactHtml = loadContactTemplate(contact,'onclick="showChat($(this),\''+contact.id+'\');"', msgDate, 2);
-		$('.list-chats').append($(contactHtml));
+	});	
+}
+function removeContactChat(contactKey){
+	var listOfContacts = $('.list-chats .cursor-class');
+	for(var idx=0; idx<listOfContacts.length; idx++){
+		var contact = $(listOfContacts[idx]);
+		if(contactKey === contact.find('#contactId').text()){
+			contact.empty();
+		}
 	}
+}
+function loadChatContacts2(contact, message){
+	var isGroup = false;
+	var contactId = $('.list-chats #contactId').text();
+	if(contactId === contact.id){
+		if($('#chatbody').hasClass('d-none') && message.status === 0){
+			var msgCntElem = $('.list-chats #msgCount');
+			var count = msgCntElem.text();
+			count = parseInt(count);
+			count++;
+			msgCntElem.text(count);
+		}
+		return;
+	}
+	if(contact.members){
+		var currentUser = auth.currentUser;
+		isGroup = contact.members.indexOf(currentUser.uid);
+		if(isGroup === -1)
+			return;
+	}
+	var today = getFormattedDate(new Date(), DATE_FORMAT);
+	var msgDate = getFormattedDate(new Date(contact.lastSeen), DATE_FORMAT);
+	if(new Date(today).getTime() === new Date(msgDate).getTime()){
+		msgDate = getFormattedDate(new Date(contact.lastSeen), LAST_SEEN_FORMAT);
+	}
+	var contactId = contact.id;
+	var contactHtml = loadContactTemplate(contact,'onclick="showChat($(this),\''+contactId+'\', \'contactPanel\');"', msgDate, 0);
+	$('.list-chats').append($(contactHtml));
 }
 
 function loadContacts(contact){
-	var contactHtml = loadContactTemplate(contact, 'onclick="showChat($(this),\''+contact.id+'\');"');
+	var contactHtml = loadContactTemplate(contact, 'onclick="showChat($(this),\''+contact.id+'\', \'allContactsPanel\');"');
 	$('.list-contacts').append($(contactHtml));
 }
 function loadGroupContacts(contact){
-	if(contact.members){
-		var currentUser = auth.currentUser;
-		var isGroup = contact.members.indexOf(currentUser.uid);
-		if(isGroup){
-			var contactHtml = loadContactTemplate(contact, 'onclick="onSelectContact(this);"', '<span id="CID" style="display:none;">'+contact.id+'</span><i class="d-none fas fa-check-circle"></i>');
-			$('.list-select-contacts').append($(contactHtml));
-		}
-	}
+	var contactHtml = loadContactTemplate(contact, 'onclick="onSelectContact(this);"', '<span id="CID" style="display:none;">'+contact.id+'</span><i class="d-none fas fa-check-circle"></i>');
+	$('.list-select-contacts').append($(contactHtml));
 }
+
 function loadContactTemplate(contact, onClickEvent, msgDate, msgCount){
 	if(!contact.pic || contact.pic.indexOf('img/profile-img') > -1)
 		contact.pic = getDefaultPhoto();
@@ -49,24 +76,23 @@ function loadContactTemplate(contact, onClickEvent, msgDate, msgCount){
 		contactHtml += '<span id="info" style="display:none;">group</span>';
 	else
 		contactHtml += '<span id="info" style="display:none;">personal</span>';
+	contactHtml += '<span id="contactId" style="display:none;">'+contact.id+'</span>';
 	contactHtml += '<img id="contactPhoto" src="'+contact.pic+'" class="rounded-circle circled-image">';
 	contactHtml += '<div class="chat-text">';
 	contactHtml += '<div class="chat-head"><div class="user-name"><span>'+contact.name+'</span></div>';
-	
 	if(msgDate)
 		contactHtml += '<div class="chat-time"><span class="font-weight-light">'+msgDate+'</span></div>';
 	if(msgCount)
-		contactHtml += '<span class="font-weight-light">'+msgCount+'</span>';
+		contactHtml += '<span id="msgCount" class="font-weight-light">'+msgCount+'</span>';
 	contactHtml += '</div>';
 	if(contact.lastMsg)
 		contactHtml += '<div class="last-msg font-weight-light"><span>'+contact.lastMsg+'</span></div>';
 	contactHtml += '</div>';
 	contactHtml += '</li></span>';
 	return contactHtml;
-	//$('.list-group').append($(contactHtml));
 }
-//$('#chatbody').hide();
-function showChat(event, id){
+function showChat(event, id, parent){
+	$('#'+parent).addClass('d-none');
 	var selectChat = event.find('li');
 	if(!selectChat.hasClass('chat-select')){
 		selectChat.addClass('chat-select');
@@ -75,7 +101,17 @@ function showChat(event, id){
 	var name = event.find('.user-name').text();
 	var info = event.find('#info').text();
 	showChat2(pic, name, id, info);
-	showContactChat();
+	showContactChat(id, parent);
+}
+function updateMsgStatus(){
+	var viewIds = [];
+	var msgs = $('#chatbody .chat-window div[isview=0]');
+	for(var idx=0; idx<msgs.length; idx++){
+		var msg = $(msgs[idx]);
+		updateMessage({msgDateTime: msg.attr('id'), status : 1}, function(msgId){
+
+		});
+	}
 }
 function addChatHeader(pic, name){
 	var hdrHtml = '';
@@ -89,8 +125,6 @@ function showChat2(pic, name, id, info){
 	$('#chatbody #navbar').empty();
 	var chatHdr = addChatHeader(pic, name);
 	$('#chatbody #navbar').append(chatHdr);
-	//$('#chatbody #contactPhoto2').attr('src', pic);
-	//$('#chatbody #contactName2').text(name);
 	$('#chatbody #chatId').val(id);
 	if(info === 'group'){
 		$('#chatbody #chatMenu').empty();
@@ -107,7 +141,7 @@ function getContactChatMenuTemplate(){
 	template += '<span class="dropdown-item">View Contact</span>';
 	template += '<span class="dropdown-item">Search</span>';
 	template += '<span class="dropdown-item">Change Wallpaper</span>';
-	template += '<span class="dropdown-item">Clear Chat</span>';
+	template += '<span class="dropdown-item" onclick="clearChat(\'chatbody\');">Clear Chat</span>';
 	return template;
 }
 function getGroupChatMenuTemplate(){
@@ -118,62 +152,71 @@ function getGroupChatMenuTemplate(){
 	template += '<span class="dropdown-item">Exit Group</span>';
 	return template;
 }
-function showContactChat(){
-	$('#chatbody .chat-window').empty();
-	$('#chatbody .chat-window').css('overflow-y', 'hidden');
+function showContactChat3(crit){
 	var id = $('#chatbody #chatId').val();
-	showChatPanel();
-	/*var currentUser = auth.currentUser;
-	var today = getFormattedDate(new Date(), 'MMM DD, YYYY');*/
-	var database = firebase.database();
-
-	database.ref('chat_messages').orderByKey().on('value', function(snapshot){
-		var chatItem = snapshot.val();
-		if(!chatItem)
-			return;
-		/*var chatList = [];
-		for (const [key, value] of Object.entries(chatItem)) {
-			if((value.from === id && value.to === currentUser.uid) || (value.to === id && value.from === currentUser.uid))
-				chatList.push(value);
+	var currentUser = auth.currentUser;
+	var uid = currentUser.uid;
+	var today = getFormattedDate(new Date(), DATE_FORMAT);
+	tharak.getMessages(uid, id, crit, function(results){
+		for(var idx=0; idx<results.rows.length; idx++){
+			var item = results.rows.item(idx);
+			item.from = item.fromAddr;
+			item.to = item.toAddr;
+			item.type = item.msgType;
+			addChatMessage2(item, today, currentUser, id);
 		}
-		chatList.sort(function(a,b){
-			if(a.msgDateTime < b.msgDateTime) { return -1; }
-			if(a.msgDateTime > b.msgDateTime) { return 1; }
-			return 0;
-		}).forEach(function(item) {
-			addScrollBar();
-			var msgDate = getFormattedDate(new Date(item.msgDateTime), 'MMM DD, YYYY');
-			  if(new Date(today).getTime() === new Date(msgDate).getTime()){
-				msgDate = 'TODAY';
-			  }
-				addDateForChat(msgDate);
-			  
-			  if(currentUser.uid === item.from)
-				addRightChat(item);
-			  else
-				addLeftChat(item);
-			  $(".chat-window").scrollTop($(".chat-window")[0].scrollHeight);
-		});	*/
-		var currentUser = auth.currentUser;
-		var today = getFormattedDate(new Date(), 'MMM DD, YYYY');
-		for (const [key, value] of Object.entries(chatItem)) {
-			addChatMessage(value, today, currentUser);
-		}
+		updateMsgStatus();
 	});
 }
-function addChatMessage(item, today, currentUser){
-	addScrollBar();
-	var msgDate = getFormattedDate(new Date(item.msgDateTime), 'MMM DD, YYYY');
-	  if(new Date(today).getTime() === new Date(msgDate).getTime()){
-		msgDate = 'TODAY';
-	  }
-		addDateForChat(msgDate);
-	  
-	  if(currentUser.uid === item.from)
-		addRightChat(item);
-	  else
-		addLeftChat(item);
-	  $(".chat-window").scrollTop($(".chat-window")[0].scrollHeight);
+function showContactChat4(message){
+	if($('#chatbody').hasClass('d-none')){
+		return;
+	}
+	message.status = 1;
+	var chatDate = getFormattedDate(new Date(message.msgDateTime), DATE_FORMAT);
+	addChatMessage2(message, chatDate, {uid:message.to}, message.from);
+	updateMessage({msgDateTime: message.msgDateTime, status : 1}, function(msgId){
+		console.log(msgId);
+	});
+}
+function showContactChat(id, parent){
+	$('#chatbody .chat-window').empty();
+	$('#chatbody .chat-window').css('overflow-y', 'hidden');
+	showChatPanel();
+	if(parent !== 'allContactsPanel'){
+		clearMsgCount(id, parent);
+		showContactChat3();
+	}
+}
+function clearMsgCount(id, parent){
+	var contactId = $('.list-chats #contactId').text();
+	if(contactId === id){
+		var msgCntElem = $('.list-chats #msgCount');
+		msgCntElem.text(0);
+	}
+}
+function addChatMessage(item, currentUser, id){
+	if((item.from === currentUser.uid || item.to === currentUser.uid) && (item.from === id || item.to === id)){
+		return 1;
+	}
+	return 0;
+}
+function addChatMessage2(item, today, currentUser, id){
+	if((item.from === currentUser.uid || item.to === currentUser.uid) && (item.from === id || item.to === id)){
+		addScrollBar();
+		var msgDate = getFormattedDate(new Date(item.msgDateTime), DATE_FORMAT);
+		  if(new Date(today).getTime() === new Date(msgDate).getTime()){
+			msgDate = 'TODAY';
+		  }
+			addDateForChat(msgDate);
+		  if(currentUser.uid === item.from)
+			addRightChat(item);
+		  else
+			addLeftChat(item);
+		  $(".chat-window").scrollTop($(".chat-window")[0].scrollHeight);
+		  return 1;
+	}
+	return 0;
 }
 function detectmob() {
    if(window.innerWidth <= 600 && window.innerHeight <= 800) {
@@ -206,7 +249,7 @@ function showProfilePanel2(){
 	$('#contactPanel').addClass('d-none');
 	$('#chgProfile').removeClass('d-none');
 	$('.fab').hide();
-	$('#chatbody').hide();
+	$('#chatbody').addClass('d-none');
 }
 function getFormattedDate(dateTime, format){
 	return moment(dateTime).format(format);
@@ -245,9 +288,9 @@ function addLeftChat(chatData){
 	var elem = $('#chatbody .chat-window').find('#'+chatData.msgDateTime);
 	if(elem.length > 0)
 		return;
-	var msgTime = moment(new Date(chatData.msgDateTime)).format('hh:mm A');
+	var msgTime = moment(new Date(chatData.msgDateTime)).format(TIME_FORMAT);
 	var chatHtml = '';
-	chatHtml += '<div id="'+chatData.msgDateTime+'" class="row user-chat"><div class="msg chat-item-left"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
+	chatHtml += '<div id="'+chatData.msgDateTime+'" isview="'+chatData.status+'" class="row user-chat"><div class="msg chat-item-left"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
 	if(chatData.type.indexOf('image') > -1)
 		chatHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+chatData.mediaData+'"></div><div><span>'+chatData.messageText+'</span></div></div>';
 	else if(chatData.type.indexOf('audio') > -1)
@@ -276,9 +319,9 @@ function addRightChat(chatData){
 	var elem = $('#chatbody .chat-window').find('#'+chatData.msgDateTime);
 	if(elem.length > 0)
 		return;
-	var msgTime = moment(new Date(chatData.msgDateTime)).format('hh:mm A');
+	var msgTime = moment(new Date(chatData.msgDateTime)).format(TIME_FORMAT);
 	var chatHtml = '';
-	chatHtml += '<div id="'+chatData.msgDateTime+'" class="row my-chat" onclick="onSelectMsg(this)"><div class="msg chat-item-right"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
+	chatHtml += '<div id="'+chatData.msgDateTime+'" isview="'+chatData.status+'" class="row my-chat" onclick="onSelectMsg(this)"><div class="msg chat-item-right"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
 	if(chatData.type.indexOf('image') > -1)
 		chatHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+chatData.mediaData+'"></div><div><span>'+chatData.messageText+'</span></div></div>';
 	else if(chatData.type.indexOf('audio') > -1)
@@ -330,24 +373,10 @@ function flipControl(event){
 	}
 }
 
-function sendMessage(txtData, imgData, type){
-	addDateForChat('TODAY');
+function sendMessage(txtData, type, imgData){
 	var msgDate = new Date();
-	var today = moment(msgDate).format('hh:mm A');
+	var today = moment(msgDate).format(TIME_FORMAT);
 	var msgTime = msgDate.getTime();
-	var msgHtml = '';
-	msgHtml += '<div class="row my-chat"><div class="msg chat-item-right"><div class="d-flex flex-row">';
-	msgHtml += '<div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
-	if(type.indexOf('image') > -1)
-		msgHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+imgData+'"></div><div><span>'+txtData+'</span></div></div>';
-	else if(type.indexOf('video') > -1)
-		msgHtml += '<div class="body m-1 mr-2"><video width="400" controls><source src="'+imgData+'" type="'+type+'"></video></div>';
-	else
-		msgHtml += '<div class="body m-1 mr-2"><span>'+txtData+'</span></div>';
-
-	msgHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;"><span>'+today+'</span><i id="'+msgTime+'" style="display:none;" class="fas fa-check"></i></div></div></div></div>';
-	$('#chatbody .chat-window').append($(msgHtml));
-
 	var id = $('#chatId').val();
 	var currId = $('#currentId').val();
 	var messageData = {};
@@ -356,22 +385,15 @@ function sendMessage(txtData, imgData, type){
 	messageData.from = currId;
 	messageData.type='text';
 	messageData.msgDateTime = msgTime;
+	messageData.status = 0;
 	if(type){
 		messageData.type=type;
 		messageData.mediaData = imgData;
 	}
-	//console.log(messageData);
-	var source = 'chat_messages/'+msgTime;
-	var database = firebase.database();
-	var insert = database.ref(source);
-	//var insertRef = insert.push();
-	insert.once('value', function(snapshot){
-		//console.log(snapshot.key);
-		$('#'+snapshot.key).show();
+	var chatDate = getFormattedDate(new Date(), DATE_FORMAT);
+	insertMessage(messageData, function(msgTime){
+		addChatMessage2(messageData, chatDate, {uid:currId}, id);
 	});
-	insert.set(messageData);
-	database.ref('chat_contacts/'+currId).update({'lastMsg':txtData});
-	database.ref('chat_contacts/'+id).update({'lastMsg':txtData});
 }
 function showEmoji(){
 	$('.emoji-menu').show();
@@ -444,11 +466,12 @@ $('#chatbody #attachImg').change(function(event){
 			 $('#chatImgbody').removeClass('d-none');
 			 $('#chatbody').addClass('d-none');
 		}else{
-			sendMessage('media', reader.result, msgType);
+			sendMessage('media', msgType, reader.result);
 		}
 	}
 	reader.readAsDataURL(file, msgType);
 });
+
 function uploadMedia(file, msgType){
 	var folder = 'ShareVideo/'+new Date().getTime()+'/'
 	var storageRef = firebase.storage().ref();
@@ -474,7 +497,7 @@ function uploadMedia(file, msgType){
 	  // For instance, get the download URL: https://firebasestorage.googleapis.com/...
 	  uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
 		console.log('File available at', downloadURL);
-		sendMessage('media', downloadURL, msgType);
+		sendMessage('media', msgType, downloadURL);
 	  });
 	});
 }
@@ -493,13 +516,13 @@ function sendTxtMessage(event){
 		var txtData = $('#inputMsg').val();
 		$('#inputMsg').val("");
 		flipControl({value : ''});
-		sendMessage(txtData);
+		sendMessage(txtData, '');
 	}
 }
 function sendImgMessage(){
 	$('#chatImgbody').addClass('d-none');
 	$('#chatbody').removeClass('d-none');
-	sendMessage($('#inputMsg1').val(), $('#chatImgbody #imgMsg').attr('src'), 'image');
+	sendMessage($('#inputMsg1').val(), 'image', $('#chatImgbody #imgMsg').attr('src'));
 	$('#inputMsg1').val('');
 }
 function onSelectContact(event){
@@ -531,4 +554,21 @@ function getMemberTemplate(contact){
 	content += '<span class="user-text">'+contact.name+'</span>';
 	content += '</div></div></div></li></span>';
 	return content;
+}
+function getCurrentUserId(){
+	return $('#currentId').val();
+}
+function clearChat(chatbodyId){
+	var id = $('#chatId').val();
+	var from = $('#currentId').val();
+	tharak.getMessages(from, id, null, function(results){
+		for(var idx=0; idx<results.rows.length; idx++){
+			var contact = results.rows.item(idx);
+			tharak.removeMessages(contact, function(data){
+				updateMessage({status : 1, msgDateTime: data.msgDateTime});
+			});
+		}
+		$('#'+chatbodyId+' .chat-window').empty();
+		removeContactChat(id);
+	});
 }

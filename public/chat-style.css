@@ -6,6 +6,7 @@ body{
     margin: 0px;
     padding: 0px;
     overflow: hidden;
+	/*background: url("../img/wtasapp-background.jpg");*/
 }
 a:hover{
     text-decoration: none;
@@ -30,7 +31,7 @@ a:hover{
 }
 .search-bar{
     height: 50px;
-    margin : 0 10px;
+    margin : 0 0;
     background: #FBFBFB;
     display: flex;
     align-items : center;

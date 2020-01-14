@@ -1,5 +1,5 @@
 var isDebug = false;
-if(!isDebug){
+/*if(!isDebug){
 	var config = {
 		apiKey: "AIzaSyD7Xp9dGNT2D7jMBopG9dN3nuL4BcFNX_g",
 		authDomain: "friendship-d566b.firebaseapp.com",
@@ -42,10 +42,19 @@ if(!isDebug){
 			}
 		}
 	}
-}
+}*/
 var auth = firebase.auth();
 var loadContacts, addProfile, clearContacts, showContactPanel, loadChatContacts, loadGroupContacts, showRegister;
 let initAuth = () => {
+	tharak.addPostShow('contactPanel');
+	tharak.addPostShow('chgProfile');
+	tharak.addPostShow('newGrpPanel');
+	tharak.addPostShow('allContactsPanel');
+	tharak.addPostShow('createGroupPanel');
+	tharak.addPostShow('chatbody');
+	tharak.addPostShow('chatImgbody');
+	tharak.addPostShow('mainDiv');
+	tharak.addPostShow('chatads');
 	//block_screen();
 	var register = localStorage.getItem("is_registration");
 	var userName = localStorage.getItem("userName");
@@ -54,13 +63,11 @@ let initAuth = () => {
 			localStorage.setItem("is_registration", "y");
 			if(showRegister)
 				showRegister();
-			//tharak.navigateUrl("../register/index.html");
 		}else{
 			var path = tharak.getCurrentPath();
 			if(path.indexOf('register/index.html') === -1){
 				if(showRegister)
 					showRegister();
-				//tharak.navigateUrl("../register/index.html");
 			}
 		}
 		//unblock_screen();
@@ -68,14 +75,17 @@ let initAuth = () => {
 	}
 	auth.signInWithEmailAndPassword(userName+'@gmail.com', 'Test@123').then(function(response){
 		console.log( "Logged in successfully." );
-		localStorage.removeItem("is_registration");
+		if(register){
+			localStorage.removeItem("is_registration");
+			showChangeProfile();
+		}else{
+			loadSelfProfile();
+		}
 		unblock_screen();
-		loadSelfProfile();
-
 	}).catch(function(error) {
 		if(error.code == "auth/user-not-found"){
 			localStorage.removeItem("userName");
-			tharak.navigateUrl("../profile-pic/profile-page.html");
+			showRegister();
 		}
 	});
 };
@@ -83,9 +93,7 @@ let initAuth = () => {
 function loadSelfProfile(){
 	block_screen();
 	var currentUser = auth.currentUser;
-	var database = firebase.database();
-	database.ref('chat_contacts').once('value', function(snapshot){
-		var profileData = snapshot.val();
+	inqContacts((profileData)=>{
 		loadContactData(profileData, currentUser);
 	});
 }
@@ -110,11 +118,10 @@ function loadContactData(profileData, currentUser){
 			loadContacts(value);
 			lastContact = value;
 		}
-		if(loadChatContacts)
-			loadChatContacts(value);
+		tharak.insertContact(value);
 		if(loadGroupContacts)
 			loadGroupContacts(value);
 	}
-	//showChat2(lastContact.pic, lastContact.name, lastContact.id);
 	unblock_screen();
+	attachMessages();
 }

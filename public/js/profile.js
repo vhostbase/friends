@@ -1,12 +1,50 @@
+chgProfileShow = () =>{
+	console.log('chgProfileShow Called');
+};
 $('#profile-pic-input').change(function(event){
 	var image = $('#profilePhoto');
-	image[0].src = ''
+	image.attr('src', '');
+	image.attr('alt', event.target.files[0].name);
 	var reader = new FileReader();
-	reader.onloadend = function() {
-		 image[0].src = reader.result;
+	reader.onloadend = function(event) {
+		 image.attr('src',reader.result);
 	}
 	reader.readAsDataURL(event.target.files[0]);
+	
 });
+function uploadImage(data, msgType, fileName, callback){
+	if(!fileName){
+		callback(data);
+		return;
+	}
+	var folder = 'ProfileImages/'
+	var storageRef = firebase.storage().ref();
+	var mountainsRef = storageRef.child(folder+fileName);
+	var uploadTask = mountainsRef.putString(data, 'data_url');
+	uploadTask.on('state_changed', function(snapshot){
+	  // Observe state change events such as progress, pause, and resume
+	  // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+	  var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+	  console.log('Upload is ' + progress + '% done');
+	  switch (snapshot.state) {
+		case firebase.storage.TaskState.PAUSED: // or 'paused'
+		  console.log('Upload is paused');
+		  break;
+		case firebase.storage.TaskState.RUNNING: // or 'running'
+		  console.log('Upload is running');
+		  break;
+	  }
+	}, function(error) {
+	  // Handle unsuccessful uploads
+	}, function() {
+	  // Handle successful uploads on complete
+	  // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+	  uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+		console.log('File available at', downloadURL);
+		callback(downloadURL);
+	  });
+	});
+}
 function uploadPhoto(){
 	$('#profile-pic-input').click();
 }
@@ -44,6 +82,14 @@ $(document).on("click", "#mainDiv", function(){
 	window.location.href="../chats/index.html";
 }*/
 function doChgRegister(){
+	var data = $('#profilePhoto').attr('src');
+	var fileName = $('#profilePhoto').attr('alt');
+	uploadImage(data, 'png', fileName, function(url){
+		doChgRegister2(url);
+	});
+}
+function doChgRegister2(url){
+	$('#chgProfile').addClass('d-none');
 	adjustFileds();
 	var userName = localStorage.getItem("userName");
 	var currentUser = firebase.auth().currentUser;
@@ -53,16 +99,17 @@ function doChgRegister(){
 		id: currentUser.uid,
 		name: $('#lbl_contact_name').text(),
 		number: userName,
-		pic: "img/profile-img-new.PNG",
+		//pic: "img/profile-img-new.PNG",
 		lastSeen: "Apr 29 2018 17:58:02"
 	};
-	userData.pic = getProfilePhoto();
+	userData.pic = url;
 	database.ref('chat_contacts/'+currentUser.uid).set(userData, function(error) {
 		if(error){
 			console.log(error);
 		}else{
 			console.log('Update successful');
-			doHome();
+			loadSelfProfile();
+			//doHome();
 			//window.location.href="../home.html";
 			//goToHome(currentUser.uid);
 		}
@@ -81,16 +128,21 @@ function getProfilePhoto(){
 function addChgProfile(profileData){
 	$('#profilePhoto').attr('src', profileData.pic);
 	$('#lbl_contact_name').text(profileData.name);
-	showProfilePanel2();
+	//showProfilePanel2();
+	//showProfilePanel();
 	//unblock_screen();
 }
-function showProfilePanel(){
+function showProfilePanel(event){
 	//block_screen();
+	if(!event)
+		$('#chgProfile #prfBack').show();
 	var database = firebase.database();
 	var currentUser = firebase.auth().currentUser;
 	database.ref('chat_contacts/'+currentUser.uid).once('value', function(snapshot){
 		var profileData = snapshot.val();
-		addChgProfile(profileData);
+		if(profileData)
+			addChgProfile(profileData);
+		showProfilePanel2();
 	});
 
 }
@@ -102,7 +154,7 @@ function getGrpProfilePhoto(){
 	return data;
 }
 function getDefaultPhoto(){
-	return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAAwCAYAAABaHInAAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALgSURBVGhD7ZqBbpswEIb3/i+5dV1KIZBkrTJK2tTji7BkscOcD4ctU076pArs8/1g7DunX3a7nfsfuQu7NbILq+rabcrKfS+e3bdN4b6O4Br3nvo2tJV85CCLsLpp3I/n8g8RGhBKX3xIvq0sEtb0wTwaBUngC5/SWKmYhRXVVgwuB0VViWOmYBKW8y1NwRjS2FqShfHhS4FcA8aSYtCQJGxNUR6rOLWwNabfFJZpqRJ2zYVCS+qCMiuM5VcaSEtRN267P7jm8NMV22W+UraCWWGWKfhQlG7/8urO57MbG9e4Rxupb4yUKRkVRjYgDRCDgLvTaZAxbbSxiNNmKFFhljSp7boh9Hlr3zrRRwxikmIdExUmJbEx+JZSjT6SrxhSrGMmhZF5S05jHNu3IVy90UfyFaNUVAWTwigrJKcxrCb5ikFZJMUcMinMkmVYTfIVQ5ONTApL/b7AapKvGMQmxRwyKUxyOEd3eh9C1Rt9JF9zSDGHZBXWHF6GcPVGH8nXHFLMIVmFseG+f3wMIc8bbS2bNEgxh2QVBpuq7tOmzyH0aaMNbSUfGqSYQ7IuHh4CjmUg3FsiatHikaOoJHgS3tfjr8tGzN9LBHkWLfeWDXotFm3QlpRqLRalVGD9zspmf5l2x7a9ZPAhXONe2dgXKCnWMVFhKWULlTLfUqrRh76ST4ksZYum0GQfsggaGz40e1qWQhNiRwOscFL5bzV8xVbNx164FKPErLCpw5zcorzFxGU9zAGOvsIBriXKmyTuKffxmyeckpYsPtU47PHjXe3A1MOOz5NcyxhLk2VIJAkDBuIARpPoWg3f7IVWUZAsDJgaPM2UEkVr+MS3ZfqFmIQBC8pD/0TJInK8PXzgi2/qr/3w52H55cmysRKU5Q3Sh774wFfKkh5jkTAP2YBPv5hGlPvUXFJN5q/Thrb0oa82o9CSRVgImbfm3yFoo8nSrWQX9q9wF3Zr3IXdFjv3G/EWPMFeJopvAAAAAElFTkSuQmCC";
+	return "https://firebasestorage.googleapis.com/v0/b/friendship-d566b.appspot.com/o/ProfileImages%2Fprofile-img-new.PNG?alt=media&token=b421ad66-3ba8-4b80-8585-676289503755";
 }
 /*
 	{
@@ -113,7 +165,6 @@ function getDefaultPhoto(){
 	}
 */
 function createGroupProfile(callback){
-	//adjustFileds();
 	var creatorId = $('#currentId').val();
 	var memberList = [creatorId];
 	var mems = $('.list-group-contacts').find('.cursor-class');
@@ -124,8 +175,9 @@ function createGroupProfile(callback){
 	}
 	var userName = localStorage.getItem("userName");
 	var database = firebase.database();
+	var grpUID = tharak.uuid();
 	var userData = {
-		id: creatorId,
+		id: grpUID,
 		name: $('#group_name').val(),
 		number: userName,
 		members : memberList,
@@ -134,13 +186,13 @@ function createGroupProfile(callback){
 	
 	userData.pic = getGrpProfilePhoto();
 	
-	var insert = database.ref('chat_contacts');
-	var insertRef = insert.push();
+	var insert = database.ref('chat_contacts/'+grpUID);
+	//var insertRef = insert.push();
 	insert.once('value', function(snapshot){
 		//console.log(snapshot.key);
 		callback();
 	});
-	insertRef.set(userData);
+	insert.set(userData);
 }
 function showRegister(){
 	$('.fab').hide();
@@ -153,6 +205,7 @@ function doEditMobile(){
 	$('#contact_nbr').focus();
 }
 function doRegister(){
+	$('#mainDiv').addClass('d-none');
 	adjustContactNbr();
 	var userName = $('#lbl_contact_nbr').text();
 	auth.createUserWithEmailAndPassword(userName+'@gmail.com', 'Test@123').then(function(response){
@@ -179,4 +232,14 @@ function adjustContactNbr(){
 		$('#contact_nbr').hide();
 		$('#contact_nbr').val(null);
 	}
+}
+
+function showChangeProfile(){
+	$('#chgProfile #prfBack').hide();
+	showProfilePanel(true);
+}
+
+async function addProfile(profileData){
+	$('#profile-pic').attr('src', profileData.pic);
+	$('#currentId').val(profileData.id);
 }

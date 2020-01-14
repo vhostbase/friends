@@ -3,38 +3,81 @@
 <head>
   <title>Bootstrap Example</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="bootstrap/4.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
+  <script src="jquery/jquery-3.2.1.slim.min.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-database.js"></script>
+  <script>
+	var config = {
+		apiKey: "AIzaSyD7Xp9dGNT2D7jMBopG9dN3nuL4BcFNX_g",
+		authDomain: "friendship-d566b.firebaseapp.com",
+		databaseURL: "https://friendship-d566b.firebaseio.com/",
+		storageBucket: "friendship-d566b.appspot.com"
+	  };
+  firebase.initializeApp(config);
+  addListener('BZULnlnZvISaWQKzymk8NapFYJD3');
+  addListener('dIezZlxv04fSmBLp7hJYUNQ7jwd2');
+ // firebase.database().ref('chat_messages').on("child_added", function(snapshot){
+//	if(snapshot){
+
+	//}
+ // });
+
+	  /*var database = firebase.database();
+	  database.ref('chat_messages').orderByChild('to').equalTo('dIezZlxv04fSmBLp7hJYUNQ7jwd2').once('value', function(snapshot){
+			var profileData = snapshot.val();
+			for (const [key, value] of Object.entries(profileData)){
+				console.log(value);
+			}
+			
+		});*/
+	//$('#demo').html('index.html');
+
+
+	function addListener(id){
+		var ref = firebase.database().ref('chat_messages');
+		  var crits = [];
+		  crits.push({name: 'from', value: id});
+		  crits.push({name: 'to', value: id});
+		var promises = crits.map(function(item) {
+			let promise = new Promise(function(resolve, reject) {
+				ref.orderByChild(item.name).equalTo(item.value).on("value", resolve);
+			});
+			return promise;
+		});
+		Promise.all(promises).then(function(snapshots) {
+			var messages = [];
+		  snapshots.forEach(function(snapshot) {
+			if(snapshot.val())
+			for (const [key, value] of Object.entries(snapshot.val())) {
+				messages.push(value);
+			}
+		  });
+			console.log(messages);
+		});
+	}
+  </script>
+
   
 </head>
 <body>
 
-<div class="container">
-  <h2>Spinner Buttons</h2>
-  <p>Add spinners to buttons:</p>
-                                        
-  <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?ixlib=rb-1.2.1&w=1000&q=80">
-    <span class="spinner-border spinner-border-sm"></span>
-  </img>
+<html>
+<body>
 
-  <button class="btn btn-primary">
-    <span class="spinner-border spinner-border-sm"></span>
-    Loading..
-  </button>
-  
-  <button class="btn btn-primary" disabled>
-    <span class="spinner-border spinner-border-sm"></span>
-    Loading..
-  </button>
-  
-  <button class="btn btn-primary" disabled>
-    <span class="spinner-grow spinner-grow-sm"></span>
-    Loading..
-  </button>
-</div>
+<p id="demo">Click the button to change the text in this paragraph.</p>
+
+<button onclick="myFunction()">Try it</button>
+
+<script>
+function myFunction() {
+  document.getElementById("demo").innerHTML = "Hello World";
+}
+</script>
 
 </body>
-<script src="jquery/jquery-3.2.1.slim.min.js"></script>
-  <script src="ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-  <script src="bootstrap/4.0.0/js/bootstrap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.4/croppie.min.js"></script>
+</html>
+</body>
+
 </html>
