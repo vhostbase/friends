@@ -145,6 +145,10 @@ hr{
 	width:54px; 
 	height:48px;
 }
+.circled-image-profile{
+	width:264px; 
+	height:210px;
+}
 .cursor-class{
 	cursor:pointer;
 }

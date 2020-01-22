@@ -1,7 +1,7 @@
 let tharak = window;
 let DATE_FORMAT='MMM DD, YYYY';
 let TIME_FORMAT='hh:mm A';
-let LAST_SEEN_FORMAT='mm:ss';
+let LAST_SEEN_FORMAT='MMM DD, YYYY hh:mm A';
 $( document ).ready(function() {
 	//tharak.db = openDatabase('mydb', '1.0', 'Test DB', 2 * 1024 * 1024); 
 	initAuth();	

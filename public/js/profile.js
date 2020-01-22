@@ -251,3 +251,10 @@ async function addProfile(profileData){
 function updateContactStatus(profileData){
 	$('#chatbody #details').text(profileData.lastSeen);
 }
+function onLoggOff(){
+	var currentUser = auth.currentUser;
+	var uid = currentUser.uid;
+	var today = getFormattedDate(new Date(), LAST_SEEN_FORMAT);
+	updateContacts({id: uid, lastSeen : today});
+	console.log('Logg off');
+}
