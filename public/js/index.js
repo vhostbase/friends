@@ -25,10 +25,20 @@ function removeContactChat(contactKey){
 		}
 	}
 }
+function contactExists(id){
+	var contacts = $('.list-chats #contactId');
+	for(var idx=0; idx<contacts.length; idx++){
+		var chatContact = $(contacts[idx]);
+		if(id === chatContact.text()){
+			return true;
+		}
+	}
+	return false;
+}
 function loadChatContacts2(contact, message){
 	var isGroup = false;
 	var contactId = $('.list-chats #contactId').text();
-	if(contactId === contact.id){
+	if(contactExists(contact.id)){
 		if($('#chatbody').hasClass('d-none') && message.status === 0){
 			var msgCntElem = $('.list-chats #msgCount');
 			var count = msgCntElem.text();
