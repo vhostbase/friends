@@ -20,6 +20,7 @@
                         <span class="cursor-class" onclick="showProfilePanel();">
                             <img id="profile-pic" src="../img/profile-img.PNG" class="rounded-circle circled-image">
                             <span id="currentId" style="display:none;"></span>
+                            <span id="currentName" style="display:none;"></span>
                         </span>
                     </div>
                     <div class="utility-icons cursor-class">
@@ -111,17 +112,22 @@
                 </div>
             </div>           
 			<div id="allContactsPanel" class="d-none col-lg-4 col-xs-12 left">
-	            <div class="row icons d-flex justify-content-end profile-section-top">
-	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome('#allContactsPanel');"><i class="fas fa-arrow-left text-white"></i></div>
-				  <div class="mr-auto p-2 profile-section-top-text">Select Contact</div>
-				  <div class="p-2 profile-section-top-text cursor-class"><i class="fas fa-search text-white"></i></div>
-				  <div class="p-2 profile-section-top-text cursor-class" data-toggle="dropdown"><i class="fas fa-ellipsis-v text-white"></i></div>
-				  <div class="dropdown-menu dropdown-menu-right">
-							<a class="dropdown-item" href="#">Invite a Friend</a>
-							<a class="dropdown-item" href="#">Contacts</a>
-							<a class="dropdown-item" href="#">Refresh</a>
-							<a class="dropdown-item" href="#">Help</a>
-						</div>
+	            <div id="searchHdr">
+<!-- 		            <div class="row icons d-flex searchHdrClass">
+		            	<div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome('#allContactsPanel');"><i class="fas fa-arrow-left text-white"></i></div>
+					  <div class="d-flex flex-column">
+						<div class="text-white font-weight-bold" id="contactName2">Select Contact</div>
+						<div class="text-white small" id="details">at 5:28 PM</div>
+					</div>
+					  <div class="p-2 profile-section-top-text cursor-class"><i class="fas fa-search text-white"></i></div>
+					  <div class="p-2 profile-section-top-text cursor-class" data-toggle="dropdown"><i class="fas fa-ellipsis-v text-white"></i></div>
+					  <div class="dropdown-menu dropdown-menu-right">
+								<a class="dropdown-item" href="#">Invite a Friend</a>
+								<a class="dropdown-item" href="#">Contacts</a>
+								<a class="dropdown-item" href="#">Refresh</a>
+								<a class="dropdown-item" href="#">Help</a>
+							</div>
+					</div> -->
 				</div>
 				<div class="row recent-chats">
                     <div class="col-12">
@@ -142,15 +148,17 @@
                     </div>
                 </div>
             </div>
+            
 			<div id="chatbody" class="d-none col-lg-8 col-xs-12 right">
                 <div class="row icons user-info-right">
                 	<span id="chatId" style="display:none;">Vipin</span>
+                	<span id="info" style="display:none;">group</span>
                 	<div class="row d-flex flex-row align-items-center p-2 m-0 w-100" id="navbar"></div>
                 </div>
                 <div class="container" style="width: 103%;">
                 	<div class="chat-window"></div>
                 </div>
-                <div class="row icons enter-chat">
+                <div class="row icons enter-chat chat-bar">
                     <div class="cursor-class" style="padding-left:0px;">
                         <span style="padding-left:0px; margin-right:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-smile"></i></span>
                     </div>
@@ -259,7 +267,7 @@
 	        <span class="fa fa-spinner fa-spin fa-3x w-100"></span>
 	    </div>
 	</div> -->
-	<div class="fab"> <i onclick="fabCallback(this);" class="fas fa-comment"></i></div>
+	<div class="fab d-none"> <i onclick="fabCallback(this);" class="fas fa-comment"></i></div>
 		
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->

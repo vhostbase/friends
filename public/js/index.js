@@ -4,11 +4,14 @@ function clearContacts(){
 	$('.list-select-contacts').empty();
 }
 function loadContactChat(message){
-	if(!message.from && message.to !== getCurrentUserId())
+	if(message.from !== getCurrentUserId() && message.to !== getCurrentUserId() && message.info !== 1)
 		return;
 	tharak.getContact(message, null, function(results){
 		for(var idx=0; idx<results.rows.length; idx++){
 			var contact = results.rows.item(idx);
+			if(message.info === 1 && (!contact.members || contact.members.indexOf(getCurrentUserId()) === -1)){
+				continue;
+			}
 			loadChatContacts2(contact, message);
 		}
 	});	
@@ -41,10 +44,13 @@ function loadChatContacts2(contact, message){
 		if(isGroup === -1)
 			return;
 	}
-	var today = getFormattedDate(new Date(), DATE_FORMAT);
-	var msgDate = getFormattedDate(new Date(contact.lastSeen), DATE_FORMAT);
-	if(new Date(today).getTime() === new Date(msgDate).getTime()){
-		msgDate = getFormattedDate(new Date(contact.lastSeen), LAST_SEEN_FORMAT);
+	var msgDate = 'online';
+	if(contact.lastSeen !== 'online'){
+		var today = getFormattedDate(new Date(), DATE_FORMAT);
+		msgDate = getFormattedDate(new Date(contact.lastSeen), DATE_FORMAT);
+		if(new Date(today).getTime() === new Date(msgDate).getTime()){
+			msgDate = getFormattedDate(new Date(contact.lastSeen), LAST_SEEN_FORMAT);
+		}
 	}
 	var contactId = contact.id;
 	var contactHtml = loadContactTemplate(contact,'onclick="showChat($(this),\''+contactId+'\', \'contactPanel\');"', msgDate, 0);
@@ -101,7 +107,7 @@ function showChat(event, id, parent){
 	var name = event.find('.user-name').text();
 	var info = event.find('#info').text();
 	showChat2(pic, name, id, info);
-	showContactChat(id, parent);
+	showContactChat(id, parent, info);
 }
 function updateMsgStatus(){
 	var viewIds = [];
@@ -127,9 +133,11 @@ function showChat2(pic, name, id, info){
 	$('#chatbody #navbar').append(chatHdr);
 	$('#chatbody #chatId').val(id);
 	if(info === 'group'){
+		$('#chatbody #info').val(1);
 		$('#chatbody #chatMenu').empty();
 		$('#chatbody #chatMenu').append($(getGroupChatMenuTemplate()));
 	}else{
+		$('#chatbody #info').val(0);
 		$('#chatbody #chatMenu').empty();
 		$('#chatbody #chatMenu').append($(getContactChatMenuTemplate()));
 	}
@@ -166,6 +174,24 @@ function showContactChat3(crit){
 			addChatMessage2(item, today, currentUser, id);
 		}
 		updateMsgStatus();
+		
+	});
+}
+function showContactGroupChat(crit){
+	var id = $('#chatbody #chatId').val();
+	var currentUser = auth.currentUser;
+	var uid = currentUser.uid;
+	var today = getFormattedDate(new Date(), DATE_FORMAT);
+	tharak.getGroupMessages(uid, id, crit, function(results){
+		for(var idx=0; idx<results.rows.length; idx++){
+			var item = results.rows.item(idx);
+			item.from = item.fromAddr;
+			item.to = item.toAddr;
+			item.type = item.msgType;
+
+			addChatMessage2(item, today, currentUser, id);
+		}
+		updateMsgStatus();
 	});
 }
 function showContactChat4(message){
@@ -179,13 +205,16 @@ function showContactChat4(message){
 		console.log(msgId);
 	});
 }
-function showContactChat(id, parent){
+function showContactChat(id, parent, info){
 	$('#chatbody .chat-window').empty();
 	$('#chatbody .chat-window').css('overflow-y', 'hidden');
 	showChatPanel();
 	if(parent !== 'allContactsPanel'){
 		clearMsgCount(id, parent);
-		showContactChat3();
+		if(info === 'group')
+			showContactGroupChat();
+		else
+			showContactChat3();
 	}
 }
 function clearMsgCount(id, parent){
@@ -202,7 +231,7 @@ function addChatMessage(item, currentUser, id){
 	return 0;
 }
 function addChatMessage2(item, today, currentUser, id){
-	if((item.from === currentUser.uid || item.to === currentUser.uid) && (item.from === id || item.to === id)){
+	if(((item.from === currentUser.uid || item.to === currentUser.uid) && (item.from === id || item.to === id)) || (item.info === 1)){
 		addScrollBar();
 		var msgDate = getFormattedDate(new Date(item.msgDateTime), DATE_FORMAT);
 		  if(new Date(today).getTime() === new Date(msgDate).getTime()){
@@ -255,11 +284,12 @@ function getFormattedDate(dateTime, format){
 	return moment(dateTime).format(format);
 }
 function removeMsg(event){
-	var ids = $($($(event).parent).parent).find('#rm-list span');
+	var ids = $('#chatbody #rm-list span');
 	for(var idx=0; idx<ids.length; idx++){
-		var msgId = ids[idx];
-		var elem = $('#chatbody .chat-window').find('#'+$(msgId).text());
+		var msgId = $(ids[idx]).text();
+		var elem = $('#chatbody .chat-window').find('#'+msgId);
 		elem.remove();
+		removeMsgs(msgId);
 		var selected = $('.list-chats').find('.chat-select');
 		if(selected.length > 0){
 			var pic = selected.find('#contactPhoto').attr('src');
@@ -269,12 +299,11 @@ function removeMsg(event){
 			$('#chatbody #navbar').append(chatHdr);
 		}
 	}
-	console.log('Hi');
 }
 function addChatDelHeader(id){
 	var hdrHtml = '';
 	hdrHtml += '<div class="d-block d-sm-none" onclick="showContactPanel(\'#chatbody\');"><i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;"></i></div>';
-	hdrHtml += '<div id="rm-count" class="text-white font-weight-bold">1</div>';
+	hdrHtml += '<div id="rm-count" class="text-white font-weight-bold">0</div>';
 	hdrHtml += '<div id="rm-list" style="display:none"><span>'+id+'</span></div>';
 	hdrHtml += '<div class="d-flex flex-row align-items-center ml-auto">';
 	hdrHtml += '<span class="cursor-class"><i class="fas fa-arrow-circle-left mx-3 text-white d-md-block"></i></span>';
@@ -290,7 +319,12 @@ function addLeftChat(chatData){
 		return;
 	var msgTime = moment(new Date(chatData.msgDateTime)).format(TIME_FORMAT);
 	var chatHtml = '';
-	chatHtml += '<div id="'+chatData.msgDateTime+'" isview="'+chatData.status+'" class="row user-chat"><div class="msg chat-item-left"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
+	chatHtml += '<div id="'+chatData.msgDateTime+'" isview="'+chatData.status+'" class="row user-chat" onclick="onSelectMsg(this)"><div class="msg chat-item-left">';
+	if(chatData.info === 1){
+		chatHtml += '<div class="small font-weight-bold text-primary">'+getChatterName(chatData)+'</div>';
+	}
+	//chatHtml += '<div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
+	chatHtml += '<div class="d-flex flex-row">';
 	if(chatData.type.indexOf('image') > -1)
 		chatHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+chatData.mediaData+'"></div><div><span>'+chatData.messageText+'</span></div></div>';
 	else if(chatData.type.indexOf('audio') > -1)
@@ -309,10 +343,29 @@ function addLeftChat(chatData){
 }
 function onSelectMsg(event){
 	if($('#chatbody .chat-window').attr('msg-select')){
-		$('#chatbody .chat-window #'+event.id).toggleClass('blackBg');
-		$('#chatbody #rm-list').append($('<span>'+event.id+'</span>'));
-		var count = ($('#chatbody #rm-list span').length);
+		if(!$('#chatbody .chat-window #'+event.id).hasClass('blackBg')){
+			$('#chatbody .chat-window #'+event.id).toggleClass('blackBg');
+			$('#chatbody #rm-list').append($('<span>'+event.id+'</span>'));
+		}else{
+			var count = $('#chatbody #rm-list span').length;
+			for(var idx=0; idx<count; idx++){
+				var id = $($('#chatbody #rm-list span')[idx]).text();
+				if(event.id === id){
+					$($('#chatbody #rm-list span')[idx]).remove();
+					$('#chatbody .chat-window #'+event.id).toggleClass('blackBg');
+				}
+			}
+		}
+		var count = $('#chatbody #rm-list span').length;
 		$('#chatbody #rm-count').text(count);
+		if(count === 0){
+			$('#chatbody .chat-window').removeAttr('msg-select');
+			var pic = $('#contactPanel .list-chats img').attr('src');
+			var name = $('#contactPanel .list-chats .user-name').text();
+			$('#chatbody #navbar').empty();
+			var chatHdr = addChatHeader(pic, name);
+			$('#chatbody #navbar').append(chatHdr);
+		}
 	}
 }
 function addRightChat(chatData){
@@ -321,7 +374,12 @@ function addRightChat(chatData){
 		return;
 	var msgTime = moment(new Date(chatData.msgDateTime)).format(TIME_FORMAT);
 	var chatHtml = '';
-	chatHtml += '<div id="'+chatData.msgDateTime+'" isview="'+chatData.status+'" class="row my-chat" onclick="onSelectMsg(this)"><div class="msg chat-item-right"><div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
+	chatHtml += '<div id="'+chatData.msgDateTime+'" isview="'+chatData.status+'" class="row my-chat" onclick="onSelectMsg(this)"><div class="msg chat-item-right">';
+	if(chatData.info === 1){
+		chatHtml += '<div class="small font-weight-bold text-primary">'+getCurrentUserName()+'</div>';
+	}
+	//chatHtml += '<div class="d-flex flex-row"><div class="options"><a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a></div>';
+	chatHtml += '<div class="d-flex flex-row">';
 	if(chatData.type.indexOf('image') > -1)
 		chatHtml += '<div class="body m-1 mr-2"><div><img width="150" height="200" src="'+chatData.mediaData+'"></div><div><span>'+chatData.messageText+'</span></div></div>';
 	else if(chatData.type.indexOf('audio') > -1)
@@ -342,12 +400,13 @@ function addRightChat(chatData){
     });
 }
 function fireContextMenu(event){
+	event.preventDefault();
 	$('#chatbody #navbar').empty();
 	var chatHdr = addChatDelHeader(event.currentTarget.id);
-	$('#chatbody #navbar').append(chatHdr);
-    event.preventDefault();
+	$('#chatbody #navbar').append(chatHdr);    
 	$('#chatbody .chat-window').attr('msg-select', '1');
 	$('#chatbody .chat-window #'+event.currentTarget.id).addClass('blackBg');
+	//onSelectMsg({id : event.currentTarget.id});
 }
 function addDateForChat(lblDate){
 	var lblDateKey = lblDate;
@@ -357,7 +416,7 @@ function addDateForChat(lblDate){
 	if(elem.length > 0)
 		return;
 	var chatHtml = '';
-	chatHtml += '<div id="'+lblDateKey+'" class="row user-chat"><div class="mx-auto my-2 bg-primary text-white small py-1 px-2 rounded">';
+	chatHtml += '<div id="'+lblDateKey+'" class="row user-chat" field="date"><div class="mx-auto my-2 bg-primary text-white small py-1 px-2 rounded">';
 	chatHtml += lblDate;
 	chatHtml += '</div></div>';
 	$('#chatbody .chat-window').append($(chatHtml));
@@ -379,6 +438,7 @@ function sendMessage(txtData, type, imgData){
 	var msgTime = msgDate.getTime();
 	var id = $('#chatId').val();
 	var currId = $('#currentId').val();
+	var info = parseInt($('#chatbody #info').val());
 	var messageData = {};
 	messageData.messageText = txtData;
 	messageData.to = id;
@@ -386,6 +446,7 @@ function sendMessage(txtData, type, imgData){
 	messageData.type='text';
 	messageData.msgDateTime = msgTime;
 	messageData.status = 0;
+	messageData.info = info;
 	if(type){
 		messageData.type=type;
 		messageData.mediaData = imgData;
@@ -414,18 +475,42 @@ function doAllContacts(){
 	$('#allContactsPanel').removeClass('d-none');
 	$('.fab').hide();
 }
-function fabCallback(fab){
-	if(fab.className.indexOf('fa-comment') > -1){
+function fabCallback(){
+	var fabClass = $('.fab > i').attr("class").split(/\s+/);
+	if(fabClass.indexOf('fa-comment') > -1){
 		$('#contactPanel').addClass('d-none');
 		$('#allContactsPanel').removeClass('d-none');
+		$('#allContactsPanel #searchHdr').empty();
 		$('.fab').hide();
-	}else if(fab.className.indexOf('fa-arrow-right') > -1){
+		$('.list-contacts').empty();
+		loadContacts({name:'New Group', event: 'onclick="createGroup();"'});
+		loadContacts({name:'New Contact'});
+		var currentUser = auth.currentUser;
+		var uid = currentUser.uid;
+		var conts = [];
+		tharak.getAllContacts(function(rows){
+			for(var idx=0; idx<rows.length; idx++){
+				var value = rows.item(idx);
+				if(uid === value.id || (value.members && value.members.indexOf(uid) === -1)){
+					continue;
+				}
+				conts.push(value);
+				loadContacts(value);
+			}
+			$('#allContactsPanel #searchHdr').append(addContactSrchHeader(conts));
+			$('#allContactsPanel #searchHdr #srchContact').click(function(){
+				loadContactSrch(conts);
+			});
+		});
+
+
+	}else if(fabClass.indexOf('fa-arrow-right') > -1){
 		collectGroup(function(){
 			$('#createGroupPanel').addClass('d-none');
 			$('#newGrpPanel').removeClass('d-none');
 			changFab('fa-arrow-right', 'fa-check');		
 		});
-	}else if(fab.className.indexOf('fa-check') > -1){
+	}else if(fabClass.indexOf('fa-check') > -1){
 		createGroupProfile(function(){
 			$('#newGrpPanel').addClass('d-none');
 			$('#contactPanel').removeClass('d-none');
@@ -558,6 +643,9 @@ function getMemberTemplate(contact){
 function getCurrentUserId(){
 	return $('#currentId').val();
 }
+function getCurrentUserName(){
+	return $('#currentName').val();
+}
 function clearChat(chatbodyId){
 	var id = $('#chatId').val();
 	var from = $('#currentId').val();
@@ -570,5 +658,55 @@ function clearChat(chatbodyId){
 		}
 		$('#'+chatbodyId+' .chat-window').empty();
 		removeContactChat(id);
+	});
+}
+function addContactSrchHeader(conts){
+	var hdrHtml = '';
+	hdrHtml += '<div class="row icons d-flex searchHdrClass"><div class="p-2 profile-section-top-text" style="cursor:pointer;" onclick="doHome(\'#allContactsPanel\');"><i class="fas fa-arrow-left text-white"></i></div>';
+	hdrHtml += '<div class="d-flex flex-column">';
+	hdrHtml += '<div class="text-white font-weight-bold">Select Contact</div>';
+	hdrHtml += '<div class="text-white small">'+conts.length+' contacts</div>';
+	hdrHtml += '</div>';
+	hdrHtml += '<div class="p-2 profile-section-top-text cursor-class" id="srchContact"><i class="fas fa-search text-white"></i></div>';
+	hdrHtml += '<div class="p-2 profile-section-top-text cursor-class" data-toggle="dropdown"><i class="fas fa-ellipsis-v text-white"></i></div>';
+	hdrHtml += '<div class="dropdown-menu dropdown-menu-right">';
+	hdrHtml += '<a class="dropdown-item" href="#">Invite a Friend</a>';
+	hdrHtml += '<a class="dropdown-item" href="#">Contacts</a>';
+	hdrHtml += '<a class="dropdown-item" href="#">Refresh</a>';
+	hdrHtml += '<a class="dropdown-item" href="#">Help</a>';
+	hdrHtml += '</div></div>';
+
+	return $(hdrHtml);
+}
+function loadContactSrch(conts){
+	$('#allContactsPanel #searchHdr').empty();
+	$('#allContactsPanel #searchHdr').append(addContactSrchHeader2(conts));
+	$('#allContactsPanel #searchHdr #contSrch').keyup(function(event){
+		searchContact(this, conts);
+	});
+}
+function addContactSrchHeader2(conts){
+	var hdrHtml = '';
+	hdrHtml += '<div class="row justify-content-center">';
+	hdrHtml += '<div class="col-12 col-md-10 col-lg-8">';
+    hdrHtml += '<div class="card-body row no-gutters align-items-center">';
+    hdrHtml += '<div class="col-auto" onclick="fabCallback()">';
+	hdrHtml += '<i class="fas fa-arrow-left text-body"></i>';
+	hdrHtml += '</div><!--end of col-->';
+	hdrHtml += '<div class="col">';
+	hdrHtml += '<input id="contSrch" class="form-control form-control-lg form-control-borderless" autofocus type="search" placeholder="Search topics or keywords">';
+	hdrHtml += '</div><!--end of col-->';
+	hdrHtml += '</div></div><!--end of col--></div>';
+	
+	return $(hdrHtml);
+}
+function searchContact(event, conts){
+	var filtered = conts.filter(function(elem){
+		return elem.name.toLowerCase().indexOf(event.value.toLowerCase()) > -1;
+	})
+	//console.log(filtered);
+	$('.list-contacts').empty();
+	filtered.forEach((value)=>{
+		loadContacts(value);
 	});
 }

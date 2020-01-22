@@ -94,10 +94,13 @@ function doChgRegister2(url){
 	var userName = localStorage.getItem("userName");
 	var currentUser = firebase.auth().currentUser;
 	console.log(currentUser);
+	var contactName = $('#lbl_contact_name').text();
+	if(contactName === 'Enter Your Name')
+		contactName = userName;
 	var database = firebase.database();
 	var userData = {
 		id: currentUser.uid,
-		name: $('#lbl_contact_name').text(),
+		name: contactName,
 		number: userName,
 		//pic: "img/profile-img-new.PNG",
 		lastSeen: "Apr 29 2018 17:58:02"
@@ -242,4 +245,9 @@ function showChangeProfile(){
 async function addProfile(profileData){
 	$('#profile-pic').attr('src', profileData.pic);
 	$('#currentId').val(profileData.id);
+	$('#currentName').val(profileData.name);
+}
+
+function updateContactStatus(profileData){
+	$('#chatbody #details').text(profileData.lastSeen);
 }

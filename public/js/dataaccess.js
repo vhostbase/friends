@@ -13,42 +13,11 @@ inqContacts = (callback) =>{
 		callback(profileData);
 	});
 };
-inqMessages = (id, callback) =>{
-	if(!isAttached){
-		var ref = database.ref('chat_messages');
-		ref.on("child_added", function(snapshot){
-			if(snapshot.val()){
-				var message = snapshot.val();
-				tharak.insertMessages(message);
-				//showContactChat3();
-				/*if(message.from === id || message.to === id){
-					callback(message);
-				}*/
-			}
-		});
-		isAttached = true;
-	}
-	var deleteRef = ref.once("child_removed");
-	
-};
-fetchMessages = (id, callback) =>{
-	  var crits = [];
-	  crits.push({name: 'from', value: id});
-	  crits.push({name: 'to', value: id});
-	var promises = crits.map(function(item) {
-		return database.ref('chat_messages').orderByChild(item.name).equalTo(item.value).once("value");
-	});
-	Promise.all(promises).then(function(snapshots) {
-		var messages = [];
-	  snapshots.forEach(function(snapshot) {
-		if(snapshot.val())
-		for (const [key, value] of Object.entries(snapshot.val())) {
-			messages.push(value);
-		}
-	  });
-	 
-		callback(messages);
-	});
+
+updateContacts =(data) =>{
+	var source = 'chat_contacts/'+data.id;
+	var insert = database.ref(source);
+	insert.update(data);
 };
 insertMessage = (data, callback) =>{
 	var source = 'chat_messages/'+data.msgDateTime;
@@ -72,18 +41,28 @@ messageCount = (from, to, callback) =>{
 	});
 };
 function attachMessages(){
+	/*setInterval(function(){ 
+		database.ref('chat_contacts').once('value', function(snapshot){
+			console.log('Updating Contact Status.');
+			var profileData = snapshot.val();
+			updateContactStatus(profileData);
+		});
+	
+	}, 3000);*/
 	database.ref('chat_messages').on('child_added', function(snapshot){
 		if(snapshot.val()){
 			var currentUser = auth.currentUser;
 			var uid = currentUser.uid;
 			var message = snapshot.val();
-			if(message.from === uid || message.to === uid){
+			if((message.from === uid || message.to === uid) || message.info === 1){
 				tharak.insertMessages(message, function(){
 					loadContactChat(message);
 					showContactChat4(message);
 				});
+			}else if(message.info === 1){
+				dispatchGroup(message);
 			}else{
-				database.ref('chat_messages').child(snapshot.key).set(null);
+				//database.ref('chat_messages').child(snapshot.key).set(null);
 			}
 		}
 	});
@@ -102,4 +81,14 @@ function attachMessages(){
 		});*/
 		
 	});
+	database.ref('chat_messages').on("child_removed", function(snapshot) {
+		if(snapshot.val()){
+			tharak.removeMessages({msgDateTime: snapshot.key}, function(){
+			
+			});
+		}
+	});
+}
+function removeMsgs(id){
+	database.ref('chat_messages').child(id).set(null);
 }

@@ -1,4 +1,8 @@
 contactPanelShow = () =>{
+	var currentUser = auth.currentUser;
+	var uid = currentUser.uid;
+	updateContacts({id: uid, lastSeen : 'online'});
+	$('.fab').removeClass('d-none');
 	console.log('contactPanelShow Called');
 };
 newGrpPanelShow =() =>{
@@ -8,16 +12,12 @@ findMessageCount =(contact) =>{
 
 };
 chatbodyShow =() =>{
-	/*var viewIds = [];
-	var msgs = $('#chatbody .chat-window');
-	for(var idx=0; idx<msgs.length; idx++){
-		var msg = msgs[idx];
-		if(msg.attr('isview') === 0){
-			updateMessage({msgDateTime: msg.attr('id'), status : 1}, function(msgId){
-				
-			});
-		}
-	}*/
-	//updateMessage();
+	var id = $('#chatbody #chatId').val();
+	//updateContactStatus({lastSeen: 'online'});
 	console.log('chatbodyShow Called');
+};
+getChatterName =(message) =>{
+	if(message.name)
+		return message.name;
+	return 'UnKnown';
 };

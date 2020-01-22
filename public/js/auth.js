@@ -104,20 +104,20 @@ function loadContactData(profileData, currentUser){
 	if(showContactPanel)
 		showContactPanel();
 	var lastContact;
-	if(loadContacts){
+	/*if(loadContacts){
 		loadContacts({name:'New Group', event: 'onclick="createGroup();"'});
 		loadContacts({name:'New Contact'});
-	}
+	}*/
 	for (const [key, value] of Object.entries(profileData)) {
 		if(currentUser.uid === key){
 			if(addProfile)
 				addProfile(value);
 			continue;
 		}
-		if(loadContacts){
+		/*if(loadContacts){
 			loadContacts(value);
 			lastContact = value;
-		}
+		}*/
 		tharak.insertContact(value);
 		if(loadGroupContacts)
 			loadGroupContacts(value);

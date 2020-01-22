@@ -176,7 +176,7 @@ hr{
 }
 /* FloatingActionButton End */
 
-#navbar{
+#navbar {
 	background: #009688;
 	height:99%;
 }
@@ -184,6 +184,10 @@ hr{
 #navbar1{
 	background: #009688;
 	height:99%;
+}
+.searchHdrClass{
+	background: #009688;
+	
 }
 /* Profile Start */
 .profile-section-top-text{
@@ -242,4 +246,18 @@ hr{
 #mainDiv{
 	margin-left: 10px;
     margin-right: 10px;
+}
+
+
+.form-control-borderless {
+    border: none;
+}
+
+.form-control-borderless:hover, .form-control-borderless:active, .form-control-borderless:focus {
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+.chat-bar{
+	padding:5px 5px;
 }

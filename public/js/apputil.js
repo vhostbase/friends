@@ -55,9 +55,9 @@ tharak.getDatabase=()=>{
 tharak.insertMessages =(data, callback) =>{
 	let db = tharak.getDatabase();
 	db.transaction(function (tx) {
-		tx.executeSql('CREATE TABLE IF NOT EXISTS CHAT_MESSAGES(fromAddr, toAddr, msgType, messageText, msgDateTime, status)');
+		tx.executeSql('CREATE TABLE IF NOT EXISTS CHAT_MESSAGES(fromAddr, toAddr, msgType, messageText, msgDateTime, status, info)');
 		tx.executeSql('DELETE FROM CHAT_MESSAGES WHERE msgDateTime='+data.msgDateTime);
-		tx.executeSql('INSERT INTO CHAT_MESSAGES(fromAddr,toAddr,msgType, messageText, msgDateTime, status) VALUES ("'+data.from+'","'+data.to+'","'+data.type+'","'+data.messageText+'",'+data.msgDateTime+','+data.status+' )', [], callback);
+		tx.executeSql('INSERT INTO CHAT_MESSAGES(fromAddr,toAddr,msgType, messageText, msgDateTime, status, info) VALUES ("'+data.from+'","'+data.to+'","'+data.type+'","'+data.messageText+'",'+data.msgDateTime+','+data.status+', '+data.info+' )', [], callback);
 	},function errorCB(tx, err) {
 		console.log(tx);
 	});
@@ -103,12 +103,34 @@ tharak.getMessages =(from, to, crit, callback) =>{
 		console.log(tx);
 	});
 };
+tharak.getGroupMessages =(from, to, crit, callback) =>{
+	let db = tharak.getDatabase();
+	let query = 'SELECT CC.name name,CM.fromAddr fromAddr, CM.toAddr toAddr, CM.msgType msgType, CM.messageText messageText, CM.msgDateTime msgDateTime, CM.status status, CM.info info FROM CHAT_MESSAGES CM LEFT JOIN CHAT_CONTACTS CC ON CM.fromAddr = CC.id WHERE CM.toAddr="'+to+'"';
+	if(crit){
+		query +=' and '+crit;
+	}
+	db.transaction(function (tx) {
+		tx.executeSql(query, [], function (tx, results) {
+			if(results.rows.length > 0)
+				callback(results);
+		});
+	},function errorCB(tx, err) {
+		console.log(tx);
+	});
+};
 tharak.insertContact =(data) =>{
 	let db = tharak.getDatabase();
 	db.transaction(function (tx) {
-		tx.executeSql('CREATE TABLE IF NOT EXISTS CHAT_CONTACTS(id, lastSeen, name, number, pic)');
+		tx.executeSql('CREATE TABLE IF NOT EXISTS CHAT_CONTACTS(id, lastSeen, name, number, pic, members)');
 		tx.executeSql('DELETE FROM CHAT_CONTACTS WHERE id="'+data.id+'"');
-		tx.executeSql('INSERT INTO CHAT_CONTACTS(id, lastSeen, name, number, pic) VALUES ("'+data.id+'","'+data.lastSeen+'","'+data.name+'","'+data.number+'","'+data.pic+'" )');
+		var currentUser = auth.currentUser;
+		var uid = currentUser.uid;
+		if(data.members){
+			if(data.members.indexOf(uid) > -1)
+				tx.executeSql('INSERT INTO CHAT_CONTACTS(id, lastSeen, name, number, pic, members) VALUES ("'+data.id+'","'+data.lastSeen+'","'+data.name+'","'+data.number+'","'+data.pic+'", "'+data.members+'" )');
+		}else{
+			tx.executeSql('INSERT INTO CHAT_CONTACTS(id, lastSeen, name, number, pic) VALUES ("'+data.id+'","'+data.lastSeen+'","'+data.name+'","'+data.number+'","'+data.pic+'")');
+		}		
 	},function errorCB(tx, err) {
 		console.log(tx);
 	});
@@ -124,6 +146,18 @@ tharak.getContact =(message, crit, callback) =>{
 		tx.executeSql(query, [], function (tx, results) {
 			if(results.rows.length > 0)
 				callback(results);
+		});
+	},function errorCB(tx, err) {
+		console.log(tx);
+	});
+};
+tharak.getAllContacts =(callback) =>{
+	let db = tharak.getDatabase();
+	let query = 'SELECT * FROM CHAT_CONTACTS';
+	db.transaction(function (tx) {
+		tx.executeSql(query, [], function (tx, results) {
+			if(results.rows.length > 0)
+				callback(results.rows);
 		});
 	},function errorCB(tx, err) {
 		console.log(tx);
