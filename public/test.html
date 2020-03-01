@@ -4,12 +4,12 @@
   <title>Bootstrap Example</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
-  <script src="jquery/jquery-3.2.1.slim.min.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
+  <script src="jquery/jquery-1.12.4.min.js"></script>
+	<!--<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-auth.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-database.js"></script>-->
   <script>
-	var config = {
+	/*var config = {
 		apiKey: "AIzaSyD7Xp9dGNT2D7jMBopG9dN3nuL4BcFNX_g",
 		authDomain: "friendship-d566b.firebaseapp.com",
 		databaseURL: "https://friendship-d566b.firebaseio.com/",
@@ -17,7 +17,7 @@
 	  };
   firebase.initializeApp(config);
   addListener('BZULnlnZvISaWQKzymk8NapFYJD3');
-  addListener('dIezZlxv04fSmBLp7hJYUNQ7jwd2');
+  addListener('dIezZlxv04fSmBLp7hJYUNQ7jwd2');*/
  // firebase.database().ref('chat_messages').on("child_added", function(snapshot){
 //	if(snapshot){
 
@@ -35,7 +35,7 @@
 	//$('#demo').html('index.html');
 
 
-	function addListener(id){
+	/*function addListener(id){
 		var ref = firebase.database().ref('chat_messages');
 		  var crits = [];
 		  crits.push({name: 'from', value: id});
@@ -56,28 +56,69 @@
 		  });
 			console.log(messages);
 		});
-	}
+	}*/
+
+/*function include(file) { 
+  
+	var script = "<script src=\""+file+"\"><\/script>";
+	$(script).appendTo("body");
+ 
+}*/
+//$("<p>Hello</p>").appendTo("body");
+//include('js/apputil.js');
+/*$(document).ready(function() {
+	include('js/apputil.js');
+     // $("<p>Hello</p>").appendTo("body");
+});*/
+
+// request permission on page load
+function notifyMe() {
+  // Let's check if the browser supports notifications
+  if (!("Notification" in window)) {
+    alert("This browser does not support desktop notification");
+  }
+
+  // Let's check if the user is okay to get some notification
+  else if (Notification.permission === "granted") {
+    // If it's okay let's create a notification
+    var notification = new Notification("Hi there!");
+  }
+
+  // Otherwise, we need to ask the user for permission
+  // Note, Chrome does not implement the permission static property
+  // So we have to check for NOT 'denied' instead of 'default'
+  else if (Notification.permission !== 'denied') {
+    Notification.requestPermission(function (permission) {
+
+      // Whatever the user answers, we make sure we store the information
+      if(!('permission' in Notification)) {
+        Notification.permission = permission;
+      }
+
+      // If the user is okay, let's create a notification
+      if (permission === "granted") {
+        var notification = new Notification("Hi there!");
+      }
+    });
+  } else {
+    alert(`Permission is ${Notification.permission}`);
+  }
+}
   </script>
 
   
 </head>
 <body>
 
-<html>
-<body>
-
 <p id="demo">Click the button to change the text in this paragraph.</p>
-
+<button onclick="notifyMe()">Notify me!</button>
 <button onclick="myFunction()">Try it</button>
 
-<script>
+<!--<script>
 function myFunction() {
   document.getElementById("demo").innerHTML = "Hello World";
 }
-</script>
+</script>-->
 
 </body>
-</html>
-</body>
-
 </html>
