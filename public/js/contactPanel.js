@@ -9,22 +9,31 @@ class contactPanel extends BaseClass
 		this.getWidgetByPath('#contactSearch').keyup(this.searchContact.bind(this));
 	}
 	onNavigate(data){
-		auth.signInWithEmailAndPassword(data.userName+'@gmail.com', 'Test@123').then(this.authSuccessCallback.bind(this)).catch(function(error) {
-			if(error.code == "auth/user-not-found"){
-				localStorage.removeItem("userName");
-				this.authErrorCallback();
-			}
-		}.bind(this));
-
+		var uid = Utility.getCurrentUserId();
+		if(!uid){ 
+			auth.signInWithEmailAndPassword(data.userName+'@gmail.com', 'Test@123').then(this.authSuccessCallback.bind(this)).catch(function(error) {
+				if(error.code == "auth/user-not-found"){
+					localStorage.removeItem("userName");
+					this.authErrorCallback();
+				}
+			}.bind(this));
+		}else{
+			this.addProfile(data);
+			this.attachCallbacks();
+		}
 	}
 	authSuccessCallback(response){
 		console.log( "Logged in successfully." );
 		provider.updateContact(Utility.getCurrentUserId(), {lastSeen: 'online'}, function(){
-			provider.attachContacts(this);
-			provider.attachMessages(this);			
+			this.attachCallbacks();	
 		}.bind(this));
 	}
 	authErrorCallback(){
+		location.reload();
+	}
+	attachCallbacks(){
+		provider.attachContacts(this);
+		provider.attachMessages(this);
 	}
 	preShow(){
 
@@ -71,13 +80,13 @@ class contactPanel extends BaseClass
 	postShow(){
 		frmStack.splice(0, frmStack.length);
 		frmStack.push(this);
-		this.onBack();
+		this.fromBack();
 		$(".fab").unbind('click');
 		$('.fab').click(this.fabCallback);
 		this.getWidgetByPath('.list-chats').find('.chat-select').removeClass('chat-select');
 				this.onBack();
 	}
-	onBack(){
+	fromBack(){
 		Utility.changFab('fa-comment');
 		$('.fab').removeClass('d-none');
 	}

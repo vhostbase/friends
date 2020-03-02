@@ -33,16 +33,21 @@ class Utility
 	}
 	static getCurrentUserId(){
 		var currentUser = auth.currentUser;
-		return currentUser.uid;
+		if(currentUser)
+			return currentUser.uid;
 	}
 	static getCurrentEmail(){
 		var currentUser = auth.currentUser;
-		return currentUser.email;
+		if(currentUser)
+			return currentUser.email;
 	}
 	static getCurrentUserAlias(){
 		var currentUser = auth.currentUser;
-		var email = currentUser.email;
-		return email.replace('@gmail.com', '');
+		if(currentUser){
+			var email = currentUser.email;
+			return email.replace('@gmail.com', '');
+		}
+		return null;
 	}
 	static getCurrentTime(){
 		var msgDate = new Date();

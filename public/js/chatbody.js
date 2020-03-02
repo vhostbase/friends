@@ -33,8 +33,6 @@ class chatbody extends BaseClass
 	adjustFields(){
 		this.getWidgetByPath("").scrollTop(this.getWidgetByPath("")[0].scrollHeight);
 	}
-	onBack(){
-	}
 	postShow(){
 		$('.fab').addClass('d-none');		
 		this.getWidgetByPath(".container").scrollTop(this.getWidgetByPath(".container")[0].scrollHeight);

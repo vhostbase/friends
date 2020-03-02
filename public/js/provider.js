@@ -15,6 +15,7 @@ class Provider
 		}
 	}
 	attachContacts(target){
+		console.log('Contacts attached');
 		var strUrl = 'chat_contacts';
 		this.database.ref(strUrl).on('child_added', function(snapshot){
 			if(snapshot.val()){
@@ -29,9 +30,24 @@ class Provider
 			return;
 		}.bind(target));
 		this.database.ref(strUrl).on('child_removed', function(snapshot){
-			var profileData = snapshot.val();
-			//target.loadUserContacts(profileData);
-			return;
+			console.log('Contact deleted');
+			if(snapshot.val()){
+				var profileData = snapshot.val();				
+				var currentUser = auth.currentUser;
+				storage.removeContact({id: snapshot.key});
+				if(snapshot.key === currentUser.uid){
+					auth.signOut().then(function() {
+						currentUser.delete().then(function() {
+							localStorage.removeItem("userName");
+							location.reload();
+						}).catch(function(error) {
+						  console.log(error);
+						});
+					}).catch(function(error) {
+						console.log(error);
+					});
+				}
+			}
 		}.bind(target));
 	}
 	updateContact(path, data, callback){
@@ -113,11 +129,12 @@ class Provider
 			
 		});
 		this.database.ref('chat_messages').on("child_removed", function(snapshot) {
-			/*if(snapshot.val()){
+			console.log('deleted');
+			if(snapshot.val()){
 				storage.removeMessages({msgDateTime: snapshot.key}, function(){
 				
 				});
-			}*/
+			}
 		});	
 	}
 }

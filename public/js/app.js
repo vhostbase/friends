@@ -18,11 +18,12 @@ class app
 			var backCallback = function(event) {
 				if(parent.frmStack.length > 1){
 					var formId = parent.frmStack.pop();
+					formId.onBack();
 					formId.hide();
 				}
 				let oldFrm = this.frmStack[parent.frmStack.length-1];
 				oldFrm.isBack = true;
-				oldFrm.onBack();
+				oldFrm.fromBack();
 				oldFrm.show();
 				
 			};
@@ -42,11 +43,13 @@ class app
 				})
 			}
 			const mutationObserver = new MutationObserver(callback.bind(this));
+			console.log('Called '+formObj.id);
 			mutationObserver.observe($('#'+formObj.id)[0], { attributes: true });
 			formList[formObj.id] = formObj;
 		}.bind(this);
 		this.frmStack = [];
 		this.formList = {};
+		registerForm(this.formList, ImageCropper);
 		registerForm(this.formList, newGrpPanel);
 		registerForm(this.formList, userProfile);
 		registerForm(this.formList, register);
@@ -92,8 +95,12 @@ class app
 function onLoggOff(){
 	var uid = Utility.getCurrentUserId();
 	if(uid){
-		var today = Utility.getFormattedDate(new Date(), LAST_SEEN_FORMAT);
-		provider.updateContacts({id: uid, lastSeen : today});
-		console.log('Logg off');
+		auth.signOut().then(function() {
+			var today = Utility.getFormattedDate(new Date(), LAST_SEEN_FORMAT);
+			provider.updateContacts({id: uid, lastSeen : today});
+			console.log('Logg off');
+		}).catch(function(error) {
+			console.log(error);
+		});
 	}
 }

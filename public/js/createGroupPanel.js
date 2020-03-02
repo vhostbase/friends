@@ -8,7 +8,7 @@ class createGroupPanel extends BaseClass
 	setMode(mode){
 		this.mode = mode;
 	}
-	onBack(){		
+	fromBack(){		
 		if(this.mode){
 			Utility.changFab('fa-check');
 			$(".fab").unbind('click');

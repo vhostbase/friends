@@ -7,6 +7,9 @@
 	<link rel="stylesheet" href="releases/v5.0.10/css/all.css" crossorigin="anonymous">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/cropper/2.3.4/cropper.min.css'>
+    <link rel="stylesheet" href="style.css">
     <!-- My style -->
     <link rel="stylesheet" href="chat-style.css">
     <title>FriendShip</title>
@@ -14,7 +17,7 @@
   <body onunload="onLoggOff()">
     <div class="container-fluid main no-scroll">
         <div class="row no-scroll">
-            <div id="contactPanel" class="d-none col-lg-4 col-sm-12 left no-scroll">
+            <div id="contactPanel" class="d-none col-lg-4 col-sm-12 left no-scroll" style="position: fixed;">
             	<div id="header">
 	                <div class="row icons">
 	                    <div class="profile-img">
@@ -49,6 +52,14 @@
                     </div>
                 </div>
             </div>
+			<div id="allContactsPanel" class="d-none col-lg-4 col-xs-12 left">
+	            <div id="searchHdr"></div>
+				<div class="row recent-chats">
+                    <div class="col-12">
+                            <ul class="list-chats"></ul>
+                    </div>
+                </div>
+            </div>            
 			<div id="chgProfile" class="d-none col-lg-4 col-xs-12 left no-scroll">
 	            <div class="row icons d-flex justify-content-end profile-section-top">
 	            	<div id="prfBack" class="p-2 profile-section-top-text" style="cursor:pointer;"><i class="fas fa-arrow-left text-white"></i></div>
@@ -57,7 +68,7 @@
 				</div>
 				<div class="scrollClass2">
 	                <div class="row profile-section-pic">
-	                	<input type="file" id="profile-pic-input" class="d-none" accept="image/*">
+	                	<!-- <input type="file" id="profile-pic-input" class="d-none" accept="image/*"> -->
 	                    <img id="profilePhoto" src="../img/profile-img-new.PNG" alt="" style="cursor:pointer;" class="rounded-circle circled-image-profile">
 	                </div>
 	                <div class="row profile-section-info">
@@ -89,7 +100,6 @@
 	                </div>
                 </div>
             </div>
-            
 			<div id="newGrpPanel" class="d-none col-lg-4 col-xs-12 left">
 	            <div class="row icons d-flex justify-content-end profile-section-top">
 	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;"><i class="fas fa-arrow-left text-white"></i></div>
@@ -115,14 +125,7 @@
                     </div>
                 </div>
             </div>           
-			<div id="allContactsPanel" class="d-none col-lg-4 col-xs-12 left">
-	            <div id="searchHdr"></div>
-				<div class="row recent-chats">
-                    <div class="col-12">
-                            <ul class="list-chats"></ul>
-                    </div>
-                </div>
-            </div> 
+
 			<div id="createGroupPanel" class="d-none col-lg-4 col-xs-12 left">
 	            <div class="row icons d-flex justify-content-end profile-section-top">
 	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;"><i class="fas fa-arrow-left text-white"></i></div>
@@ -172,7 +175,71 @@
 	                    </div>
 	                </div>
                 </div>
-            </div>           
+            </div>
+			<div id="ImageCropper" class="d-none col-lg-4 col-xs-12 left">
+            	<div class="row icons d-flex justify-content-end profile-section-top">
+	            	<div class="p-2 profile-section-top-text" style="cursor:pointer;"><i class="fas fa-arrow-left text-white"></i></div>
+				  	<div class="mr-auto p-2 profile-section-top-text">Photo Crop</div>
+				  	<div class="p-2 profile-section-top-text" style="cursor:pointer;"><i class="fas fa-check text-white"></i></div>
+				</div>
+				<main>
+					<div class="box d-none">
+						<input type="file" id="file-input" accept="image/*">
+					</div>				
+					<!-- leftbox -->
+					<div class="box-2">
+						<div class="result">
+							<img id="origImg"></img>
+						</div>
+					</div>
+					<div class="box">
+						<div class="options hide">
+							<!-- <label> Width</label> -->
+							<input type="number" class="img-w d-none" value="300" min="100" max="1200" />
+						</div>
+						<!-- <button class="btn save hide">Save</button>
+						<a href="" class="btn download hide">Download</a> -->
+					</div>
+				</main>
+<!--                 <div class="row profile-section-pic">
+                	<input type="file" id="profile-pic-input" class="d-none" accept="image/*">
+                    <img id="profilePhoto" src="../img/profile-img-new.PNG" alt="" style="cursor:pointer;" class="rounded-circle circled-image-profile">
+                </div> -->
+<!--                 <div class="row profile-section-about">
+                    <div class="container-group2">
+                        <div class="row push-down">
+                            <span id="lbl_contact_name">Group Name</span>
+                        </div>
+                    </div>
+                </div>
+				<div class="row  profile-section-about">
+                    <div class="container-group">
+                        <div class="row">
+                            <span>About and Phone number</span>
+                        </div>
+                        <div class="row push-down">
+                            <span id="lbl_contact_desc">Hi I am Available</span>
+                        </div>
+                        <div class="row push-down">
+                            <span id="lbl_mobile_desc">XXXX344</span>
+                        </div>                        
+                    </div>
+                </div>
+                <div class="row profile-section-about">
+                    <div class="container-group">
+                        <div class="row">
+                            <span>Block</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row profile-section-about">
+                    <div class="container-group">
+                        <div class="row">
+                            <span>Report contact</span>
+                        </div>
+                    </div>
+                </div>  -->                                                               
+            </div>                
             <div id="userProfile" class="d-none col-lg-4 col-xs-12 left">
             	<div id="searchHdr"></div>
                 <div class="row profile-section-pic">
@@ -227,7 +294,7 @@
                 </div>
                 <div class="container" style="width: 103%;padding-left: 1px;height: 100%;overflow: scroll;">
                 	<div class="chat-window"></div>
-					<div class="row icons enter-chat chat-bar">
+					<div class="row icons enter-chat chat-bar" style="position: absolute;bottom: 1px;width: 100%;">
 	                    <div class="cursor-class" style="padding-left:0px;">
 	                        <span style="padding-left:0px; margin-right:10px;cursor:pointer;" onclick="takePhoto();"><i class="fas fa-smile"></i></span>
 	                    </div>
@@ -249,26 +316,26 @@
 	                    </div>
 	                </div>                	
                 </div>
-                
             </div>  
+            
             <div id="chatImgbody" class="d-none col-lg-8 col-xs-12 right">
                 <div class="row icons user-info-right">
-                <div class="row d-flex flex-row align-items-center p-2 m-0 w-100" id="navbar">
-					<div class="d-block d-sm-none" onclick="showContactPanel();">
-						<i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;" onclick="showContactPanel()"></i>
+	                <div class="row d-flex flex-row align-items-center p-2 m-0 w-100" id="navbar">
+						<div class="d-block d-sm-none" onclick="showContactPanel();">
+							<i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;" onclick="showContactPanel()"></i>
+						</div>
+						<a href="#"><img id="contactPhoto2" src="../img/profile-img.PNG" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></a>
+						<div class="d-flex flex-column">
+							<div class="text-white font-weight-bold" id="contactName2">Dee</div>
+							<div class="text-white small" id="details">at 5:28 PM</div>
+						</div>
+						
+						<div class="d-flex flex-row align-items-center ml-auto">
+							<a href="#"><i class="fas fa-phone mx-3 text-white d-md-block"></i></a>
+							<a href="#"><i class="fas fa-video mx-3 text-white d-md-block"></i></a>
+							<a href="#"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></a>
+						</div>
 					</div>
-					<a href="#"><img id="contactPhoto2" src="../img/profile-img.PNG" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></a>
-					<div class="d-flex flex-column">
-						<div class="text-white font-weight-bold" id="contactName2">Dee</div>
-						<div class="text-white small" id="details">at 5:28 PM</div>
-					</div>
-					
-					<div class="d-flex flex-row align-items-center ml-auto">
-						<a href="#"><i class="fas fa-phone mx-3 text-white d-md-block"></i></a>
-						<a href="#"><i class="fas fa-video mx-3 text-white d-md-block"></i></a>
-						<a href="#"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></a>
-					</div>
-				</div>
 					<span id="chatId" style="display:none;">Vipin</span>
                 </div>
                 <div class="container" style="width: 103%;">
@@ -309,7 +376,7 @@
 	                        <div class="row push-down">
 	                            <span id="lbl_contact_nbr">Enter Your Mobile Number</span>
 	                            <input type="text" id="contact_nbr" style="display:none;"></input>
-	                            <i class="fas fa-pencil-alt text-black" style="padding-right: 20px;"></i>
+	                            <span id="edit_mobile"><i class="fas fa-pencil-alt text-black" style="padding-right: 20px;"></i></span>
 	                            <!-- <img src="../img/edit-icon.PNG" alt="" style="cursor:pointer;"> -->
 	                        </div>
 	                    </div>
@@ -394,7 +461,8 @@
 	<script src="firebasejs/7.6.1/firebase-database.js"></script>
 	<script src="firebasejs/7.6.1/firebase-storage.js"></script>
 	<script src="moment/moment.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.4/croppie.min.js"></script>
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.4/croppie.min.js"></script> -->
+	  <script src='https://cdnjs.cloudflare.com/ajax/libs/cropperjs/0.8.1/cropper.min.js'></script>
 	<script src="js/app.js"></script>
 	<script src="js/Utility.js"></script>
 	<script src="js/baseClass.js"></script>
@@ -411,5 +479,6 @@
 	 <script src="js/allContactsPanel.js"></script>
 	 <script src="js/createGroupPanel.js"></script>
 	 <script src="js/newGrpPanel.js"></script>
+	 <script src="js/ImageCropper.js"></script>
   </body>
 </html>

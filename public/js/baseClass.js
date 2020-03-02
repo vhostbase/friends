@@ -43,12 +43,6 @@ class BaseClass
 	hide(){
 		this.getWidgetByPath('').addClass('d-none');
 	}
-/*	getCurrentForm(){
-		return this;
-	}
-	getPreviousForm(){
-		return this.previous;
-	}*/
 	getWidgetByPath(id){
 		return $('#'+this.id+' '+id);
 	}
@@ -57,5 +51,7 @@ class BaseClass
 	onBack(){
 	}
 	onNavigate(){
+	}
+	fromBack(){
 	}
 }

@@ -96,7 +96,7 @@ class allContactsPanel extends BaseClass
 		//this.getWidgetByPath('.fa-arrow-left').click();
 		//frmStack.pop();
 	}
-	onBack(){
+	fromBack(){
 		this.fireFab();
 		//this.getWidgetByPath('.fa-arrow-left').click();
 	}

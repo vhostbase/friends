@@ -37,6 +37,7 @@ class Storage
 		let db = Storage.prototype.getDatabase();
 		db.transaction(function (tx) {
 			tx.executeSql('DELETE FROM CHAT_CONTACTS WHERE id='+data.id, [], function(status){
+				if(callback)
 				callback(data);
 			});
 		},function errorCB(tx, err) {

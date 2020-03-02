@@ -7,16 +7,17 @@ class chgProfile extends BaseClass
 		this.getWidgetByPath('.profile-section-info i').click(this.doEditName.bind(this));
 		this.getWidgetByPath('.profile-section-about i').click(this.doEditAbout.bind(this));
 		this.getWidgetByPath('.profile-section-pic img').click(this.doUploadPohoto.bind(this));
-		this.getWidgetByPath('#profile-pic-input').change(this.changePhoto.bind(this));
 	}
 	onNavigate(data){
 		if(data.userName){
-			auth.signInWithEmailAndPassword(data.userName+'@gmail.com', 'Test@123').then(this.authCallback.bind(this)).catch(function(error) {
-				if(error.code == "auth/user-not-found"){
-					localStorage.removeItem("userName");
-					this.authErrorCallback();
-				}
-			}.bind(this));
+			this.userName = data.userName;
+			this.isRegister = data.isRegister;
+		}else if(data.item === 'cropped'){
+			var image = this.getWidgetByPath('#profilePhoto');
+			image.attr('src', '');
+			image.attr('alt', data.fileName);
+			image.attr('src',data.imageSrc);
+			this.isCropped = true;
 		}
 	}
 	authCallback(response){
@@ -28,9 +29,11 @@ class chgProfile extends BaseClass
 	authErrorCallback(){
 	}
 	postShow(){
+		if(this.isCropped)
+			return;
 		this.adjustAllFields();
 		var uid = Utility.getCurrentUserId();
-		if(uid && uid !== ''){
+		if(uid && uid !== '' && !this.isRegister){
 			provider.inqContacts((profileData)=>{
 				this.addChgProfile(profileData);
 			}, uid);
@@ -53,11 +56,17 @@ class chgProfile extends BaseClass
 	adjustFields(){
 		this.getWidgetByPath("").scrollTop(this.getWidgetByPath("")[0].scrollHeight);
 	}
-	doEditName(){
+	doEditName(event){
+		if(event.force){
+			if(this.getWidgetByPath('#edit_name i').hasClass('fa-pencil-alt'))
+				return;
+		}
 		if(this.getWidgetByPath('#edit_name i').hasClass('fa-pencil-alt')){
 			this.getWidgetByPath('#edit_name i').removeClass('fa-pencil-alt');
 			this.getWidgetByPath('#edit_name i').addClass('fa-times');
 			var editName = this.getWidgetByPath('#lbl_contact_name').text();
+			if(editName === 'Enter Your Name')
+				editName = '';
 			this.getWidgetByPath('#contact_name').val(editName);
 			this.getWidgetByPath('#lbl_contact_name').hide();
 			this.getWidgetByPath('#contact_name').show();
@@ -67,6 +76,8 @@ class chgProfile extends BaseClass
 			this.getWidgetByPath('#edit_name i').addClass('fa-pencil-alt');
 			
 			var contactName = this.getWidgetByPath('#contact_name').val();
+			if(contactName === '')
+				contactName = 'Enter Your Name';
 			this.getWidgetByPath('#lbl_contact_name').text(contactName);
 			this.getWidgetByPath('#lbl_contact_name').show();
 			this.getWidgetByPath('#contact_name').hide();
@@ -74,7 +85,11 @@ class chgProfile extends BaseClass
 		}
 
 	}
-	doEditAbout(){
+	doEditAbout(event){
+		if(event.force){
+			if(this.getWidgetByPath('#edit_name i').hasClass('fa-pencil-alt'))
+				return;
+		}
 		if(this.getWidgetByPath('#edit_about i').hasClass('fa-pencil-alt')){
 			this.getWidgetByPath('#edit_about i').removeClass('fa-pencil-alt');
 			this.getWidgetByPath('#edit_about i').addClass('fa-times');
@@ -94,18 +109,9 @@ class chgProfile extends BaseClass
 			this.getWidgetByPath('#contact_desc').val(null);
 		}
 	}
-	changePhoto(){
-		var image = this.getWidgetByPath('#profilePhoto');
-		image.attr('src', '');
-		image.attr('alt', event.target.files[0].name);
-		var reader = new FileReader();
-		reader.onloadend = function(event) {
-			 image.attr('src',reader.result);
-		}
-		reader.readAsDataURL(event.target.files[0]);
-	}
+
 	doUploadPohoto(){
-		this.getWidgetByPath('#profile-pic-input').click();
+		app.navigateTo('ImageCropper');
 	}
 	loginCallback(callback, response){
 		console.log( "Logged in successfully." );
@@ -120,28 +126,26 @@ class chgProfile extends BaseClass
 		}.bind(this));
 	}
 	doChgRegister2(url){
-		this.doEditName();
-		this.doEditAbout();
-		var userName = localStorage.getItem("userName");
-		if(!userName)
-			userName = Utility.getCurrentUserAlias();
+		this.doEditName({force : true});
+		this.doEditAbout({force : true});		
 		var contactName = $('#lbl_contact_name').text();
-		if(contactName === 'Enter Your Name')
-			contactName = userName;
-		var database = firebase.database();
+		var contactDesc = $('#lbl_contact_desc').text();
+		
+		var userId = this.userName;
 		var userData = {
 			id: Utility.getCurrentUserId(),
 			name: contactName,
-			number: userName,
-			lastSeen: "Apr 29 2018 17:58:02"
+			number : userId,
+			aboutMsg : contactDesc,
+			lastSeen: "online"
 		};
 		userData.pic = url;
 		provider.updateContact(userData.id, userData, function(){
-			localStorage.setItem("userName", userName);
-			app.navigateTo('contactPanel');
+			localStorage.setItem("userName", userId);
+			app.navigateTo('contactPanel', userData);
 		});
 	}
-
+	
 	addChgProfile(profileData){
 		this.getWidgetByPath('#profilePhoto').attr('src', profileData.pic);
 		this.getWidgetByPath('#lbl_contact_name').text(profileData.name);

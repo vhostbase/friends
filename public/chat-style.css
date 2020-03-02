@@ -141,11 +141,12 @@ hr{
     flex-grow: 3;
 }
 .chat-window{
+    position: absolute;
     padding : 20px 10px;
 	overflow-y: hidden;
     overflow-x:hidden;
-	height: 100%;
-
+	height: 80%;
+	width: 100%;
 }
 .circled-image{
 	width:54px; 
