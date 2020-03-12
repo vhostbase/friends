@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>
+      Responsive Header Demo
+    </title>
+  </head>
+  <body>
+	<img class="img-download"></img>
+	<script src="jquery/jquery-1.12.4.min.js"></script>
+	<script type="text/javascript">
+	function addStyle(file){
+		if (document.createStyleSheet){
+			document.createStyleSheet(file);
+		}
+		else {
+			$("head").append($("<link rel='stylesheet' href='"+file+"' type='text/css' media='screen' />"));
+		}
+	}
+		$(document).ready(function(){
+			addStyle('imgstyle.css');
+		});
+	</script>
+	<script>
+		var image = document.images[0];
+		image.style.background = 'url(IWRL.gif) 50% no-repeat';
+		var downloadingImage = new Image();
+		downloadingImage.onload = function(){
+			image.src = this.src;
+			image.style.background = '';
+			addStyle('imgstyle2.css');
+		};
+		downloadingImage.src = "https://firebasestorage.googleapis.com/v0/b/friendship-d566b.appspot.com/o/ProfileImages%2Fuser-group-icon.png?alt=media&token=e1e961f9-d9df-41ff-bdb6-58ce29f5b23b";
+		
+	</script>
+  </body>
+</html>

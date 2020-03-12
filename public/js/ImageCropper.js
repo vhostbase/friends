@@ -37,7 +37,7 @@ class ImageCropper extends BaseClass
 	  this.image.attr('src', '');
 	  this.getWidgetByPath('#file-input').val(null);
 	  var fileName = this.image.attr('alt');
-	  app.navigateTo('chgProfile', {'item': 'cropped', 'imageSrc': imgSrc, 'fileName' : fileName});
+	  app.navigateTo(chgProfile, {'item': 'cropped', 'imageSrc': imgSrc, 'fileName' : fileName});
 	}
 	onBack(){
 		if(this.cropper)

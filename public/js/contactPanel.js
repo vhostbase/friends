@@ -4,45 +4,22 @@ class contactPanel extends BaseClass
 		super();
 		this.getWidgetByPath('.profile-img .cursor-class').click(function() {
 			$('.fab').addClass('d-none');
-			app.navigateTo('chgProfile', {});
+			app.navigateTo(chgProfile, this.data);
 		}.bind(this));
 		this.getWidgetByPath('#contactSearch').keyup(this.searchContact.bind(this));
+		app.registerSync(this);
 	}
 	onNavigate(data){
-		var uid = Utility.getCurrentUserId();
-		if(!uid){ 
-			auth.signInWithEmailAndPassword(data.userName+'@gmail.com', 'Test@123').then(this.authSuccessCallback.bind(this)).catch(function(error) {
-				if(error.code == "auth/user-not-found"){
-					localStorage.removeItem("userName");
-					this.authErrorCallback();
-				}
-			}.bind(this));
-		}else{
-			this.addProfile(data);
-			this.attachCallbacks();
-		}
-	}
-	authSuccessCallback(response){
-		console.log( "Logged in successfully." );
-		provider.updateContact(Utility.getCurrentUserId(), {lastSeen: 'online'}, function(){
-			this.attachCallbacks();	
-		}.bind(this));
-	}
-	authErrorCallback(){
-		location.reload();
-	}
-	attachCallbacks(){
-		provider.attachContacts(this);
-		provider.attachMessages(this);
+		this.data = data;
 	}
 	preShow(){
 
 	}
 	searchContact(){
 		var input, filter, ul, li, a, i, txtValue;
-		input = $('#contactSearch');
+		input = this.getWidgetByPath('#contactSearch');
 		filter = input.val().toUpperCase();
-		ul = $('.list-chats');
+		ul = this.getWidgetByPath('.list-chats');
 		li = ul.find("li");
 		for (i = 0; i < li.length; i++) {
 			a = $($(li[i]).find(".user-name span"));
@@ -54,10 +31,10 @@ class contactPanel extends BaseClass
 			}
 		}
 	}
-	loadUserContacts(contacts){
-		
+	loadUserContacts(contacts){		
 		if(Utility.getCurrentUserId() === contacts.id){
 			this.addProfile(contacts);
+			return;
 		}
 		if(contacts.members && contacts.members.indexOf(Utility.getCurrentUserId()) > -1){
 			contacts.lastSeen = 'Jan 25, 2020 08:57 PM';
@@ -74,27 +51,93 @@ class contactPanel extends BaseClass
 		}
 	}
 	addProfile(profileData){
-		this.getWidgetByPath('#profile-pic').attr('src', profileData.pic);		
+		if(!profileData.isRegister){
+			this.getWidgetByPath('#profile-pic').attr('src', profileData.pic);
+		}else{
+			this.getWidgetByPath('#profile-pic').attr('src', profileData.pic);
+		}
+		//this.getWidgetByPath('#profile-pic').attr('src', profileData.pic);
 		this.getWidgetByPath('#currentName').val(profileData.name);
 	}
 	postShow(){
-		frmStack.splice(0, frmStack.length);
-		frmStack.push(this);
+		if(this.data.isRegister){
+			this.addProfile(this.data);
+		}else{
+			var userId = Utility.getCurrentUserId();
+			storage.getAllContacts({where : {id : userId}}, function(results){
+				if(results.length>0){
+					var contact = results.item(0);
+					this.addProfile(contact);
+				}
+			}.bind(this));
+		}
+		if(app.isAppOnline){
+			//app.attacthMessages(this.fillMessages.bind(this));
+			//provider.fillContacts(this);
+			provider.fillMessages(this);
+		}
+		storage.getMessages(null, function(results){
+			for(var idx=0; idx<results.length; idx++){
+				this.loadContactChat(results.item(idx));
+			}
+		
+		}.bind(this));
+		
+		//frmStack.splice(0, frmStack.length);
+		//frmStack.push(this);
 		this.fromBack();
 		$(".fab").unbind('click');
 		$('.fab').click(this.fabCallback);
 		this.getWidgetByPath('.list-chats').find('.chat-select').removeClass('chat-select');
 				this.onBack();
 	}
+	loadSync(){
+		var crit = null;//{where:{viewStatus : 0}}
+		storage.getMessages(crit, function(results){
+			for(var idx=0; idx<results.length; idx++){
+				var messageData = results.item(idx);
+				if(messageData.viewStatus === 1){
+					messageData.viewStatus = 2;
+					provider.insertMessage(messageData, function(messageData){
+						//this.updateStatusFlag(messageData);
+						this.loadContactChat(messageData);
+					}.bind(this, messageData));
+				}
+			}
+		}.bind(this));		
+	}
 	fromBack(){
 		Utility.changFab('fa-comment');
 		$('.fab').removeClass('d-none');
 	}
 	fabCallback(){
-		app.navigateTo('allContactsPanel');
+		app.navigateTo(allContactsPanel);
+	}
+	removeChatContact(message){
+		if(!message.deletedBy || message.deletedBy.indexOf(Utility.getCurrentUserId()) === -1)
+			return;
+		var crit = { where: { to:{ in: [message.from, message.to]}, from: { in: [message.from, message.to]} }, 
+			order: { by: 'msgDateTime', type: 'desc' }};
+		storage.getMessages(crit, function(results){
+			var chatterId = message.from;
+			if(chatterId === Utility.getCurrentUserId())
+				chatterId = message.to;
+			var contactItem = this.findContactItem(chatterId);
+			if(results.length === 0){
+				if(contactItem)
+					contactItem.remove();
+			}else{				
+				if(contactItem){
+					var msgTxt = contactItem.find('#lastMsg');
+					var lastMessage = results.item(0);
+					msgTxt.text(lastMessage.messageText);
+				}
+			}
+			
+		}.bind(this));
 	}
 	loadContactChat(message, contact){
-		if(message.from !== Utility.getCurrentUserId() && message.to !== Utility.getCurrentUserId() && message.info !== 1)
+		if(message.deletedBy && message.deletedBy.indexOf(Utility.getCurrentUserId()) > -1)
 			return;
 		if(contact){
 			this.loadChatContacts2(contact, message);
@@ -109,9 +152,10 @@ class contactPanel extends BaseClass
 			}
 			return;
 		}
-		storage.getContact(message, null, function(results){
-			for(var idx=0; idx<results.rows.length; idx++){
-				contact = results.rows.item(idx);
+		var crit = {where :{id : message.to, or: {id : message.from}}};
+		storage.getAllContacts(crit, function(results){
+			for(var idx=0; idx<results.length; idx++){
+				contact = results.item(idx);
 				if(contact.id === Utility.getCurrentUserId())
 					continue;
 				if(message.info === 1 && (!contact.members || contact.members.indexOf(Utility.getCurrentUserId()) === -1)){
@@ -126,7 +170,7 @@ class contactPanel extends BaseClass
 		var items = this.getWidgetByPath('.list-chats li');
 		for(var idx=0; idx<items.length; idx++){
 			var item = $(items[idx]);
-			var id = item.find('#contactId').text();
+			var id = item.find('.chat-head').val();
 			if(contactId === id)
 				return item;
 		}
@@ -138,7 +182,7 @@ class contactPanel extends BaseClass
 			var contactItem = this.findContactItem(contact.id);
 			if(contactItem){
 				var msgTxt = contactItem.find('#lastMsg');
-				if(message.viewStatus === 0 && message.from !== Utility.getCurrentUserId()){
+				if(message.viewStatus === 2 && message.from !== Utility.getCurrentUserId() && contactItem.msgId !== message.msgDateTime){
 					var msgCntElem = contactItem.find('#msgNewCount');
 					var count = msgCntElem.text();
 					count = parseInt(count);
@@ -147,6 +191,7 @@ class contactPanel extends BaseClass
 						count++;
 						msgCntElem.text(count);					
 					msgTxt.addClass('highlight blue');
+					contactItem.msgId = message.msgDateTime;
 				}
 				msgTxt.text(message.messageText);
 				return;
@@ -170,8 +215,9 @@ class contactPanel extends BaseClass
 		if(message.viewStatus === 0 && message.from !== Utility.getCurrentUserId())
 			msgCount = 1;
 		var contactId = contact.id;
-		var contactHtml = $(Utility.loadContactTemplate(contact,null, msgDate, msgCount, message.messageText));
+		var contactHtml = $(Utility.loadContactTemplate(contact,msgDate, msgCount, message.messageText));
 		contactHtml.click(this.showChat.bind(this));
+		$(contactHtml.find('.chat-head')).val(contactId);
 		this.getWidgetByPath('.list-chats').append(contactHtml);
 
 	}
@@ -188,9 +234,18 @@ class contactPanel extends BaseClass
 
 		var pic = selectChat.find('img').attr('src');
 		var name = selectChat.find('.user-name span').text();
-		var info = selectChat.find('#info').text();
-		var id = selectChat.find('#contactId').text();
+		var info = selectChat.find('.group-chat').length>0?1:0;
+		var id = selectChat.find('.chat-head').val();
 
-		app.navigateTo('chatbody', {'pic':pic, 'name': name, 'info': info, 'id': id});
+		app.navigateTo(chatbody, {'pic':pic, 'name': name, 'info': info, 'id': id});
 	}
+	/*fromBack(){
+		this.getWidgetByPath('.list-chats').empty();
+		storage.getMessages(null, function(results){
+			for(var idx=0; idx<results.length; idx++){
+				this.loadContactChat(results.item(idx));
+			}
+		
+		}.bind(this));
+	}*/
 }

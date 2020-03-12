@@ -14,31 +14,51 @@ class Provider
 			this.auth = firebase.auth();
 		}
 	}
-	attachContacts(target){
-		console.log('Contacts attached');
+	removeAuthUser(){
+		if(snapshot.key === currentUser.uid){
+			auth.signOut().then(function() {
+				currentUser.delete().then(function() {
+					localStorage.removeItem("userName");
+					localStorage.removeItem("userId");
+					location.reload();
+				}).catch(function(error) {
+				  console.log(error);
+				});
+			}).catch(function(error) {
+				console.log(error);
+			});
+		}
+	}
+	fillContacts(){
+		console.log('fill Contacts attached');
 		var strUrl = 'chat_contacts';
 		this.database.ref(strUrl).on('child_added', function(snapshot){
 			if(snapshot.val()){
 				var profileData = snapshot.val();
-				target.loadUserContacts(profileData);
-				return;
+				storage.insertContact(profileData);
+				if(app.getCurrentForm().id==='chgProfile'){
+					app.getCurrentForm().loadProfile(profileData);
+				}
 			}
-		}.bind(target));
+		});
 		this.database.ref(strUrl).on('child_changed', function(snapshot){
 			var profileData = snapshot.val();
-			target.loadUserContacts(profileData);
+			storage.insertContact(profileData);
 			return;
-		}.bind(target));
+		});
 		this.database.ref(strUrl).on('child_removed', function(snapshot){
 			console.log('Contact deleted');
 			if(snapshot.val()){
 				var profileData = snapshot.val();				
 				var currentUser = auth.currentUser;
 				storage.removeContact({id: snapshot.key});
+				storage.removeImage({id: snapshot.key});			
 				if(snapshot.key === currentUser.uid){
+					Utility.deleteImage(profileData.picFile);
 					auth.signOut().then(function() {
 						currentUser.delete().then(function() {
 							localStorage.removeItem("userName");
+							localStorage.removeItem("userId");
 							location.reload();
 						}).catch(function(error) {
 						  console.log(error);
@@ -48,8 +68,9 @@ class Provider
 					});
 				}
 			}
-		}.bind(target));
+		});
 	}
+
 	updateContact(path, data, callback){
 		var source = 'chat_contacts/';
 		if(path)
@@ -61,7 +82,7 @@ class Provider
 			callback(snapshot.key);
 		});	
 	}
-	inqContacts = (callback, id)=>{
+	inqContacts(callback, id){
 		var strUrl = 'chat_contacts';
 		if(id){
 			strUrl += "/"+id;
@@ -71,70 +92,105 @@ class Provider
 			callback(profileData);
 		});
 	}
-	updateContacts =(data) =>{
+	updateContacts(data){
 		var source = 'chat_contacts/'+data.id;
 		var insert = this.database.ref(source);
 		insert.update(data);
 	}
 
-	insertMessage = (data, callback) =>{
+	insertMessage(data, callback){
+		var user = firebase.auth().currentUser;
 		var source = 'chat_messages/'+data.msgDateTime;
 		var insert = this.database.ref(source);
+		delete data.id;
 		insert.set(data);
 		insert.once('value', function(snapshot){
 			if(callback)
 			callback(snapshot.key);
 		});	
 	}
-	updateMessage = (data, callback) =>{
+	updateMessage(data, callback){
+		delete data.id;
 		var source = 'chat_messages/'+data.msgDateTime;
 		var insert = this.database.ref(source);
 		insert.update(data);
 	}
-	messageCount = (from, to, callback) =>{
-		this.database.ref('chat_messages').once('value', function(snapshot){
-			var messages = snapshot.val();
-			
-		});
+	removeMessage(data, callback){
+		var updData = {};
+		delete data.id;
+		var source = 'chat_messages/'+data.msgDateTime;
+		var insert = this.database.ref(source);
+		insert.update(updData);
 	}
-	attachMessages(target){
+	fillMessages(target){
+		console.log('fill Messages attached');
 		this.database.ref('chat_messages').on('child_added', function(snapshot){
 			if(snapshot.val()){
 				var uid = Utility.getCurrentUserId();
 				var message = snapshot.val();
-				if((message.from === uid || message.to === uid) || message.info === 1){
-					storage.insertMessages(message, function(){
-						target.loadContactChat(message);
-						if(message.status === 1)
-							message.status = 2;
-						this.updateMessage(message);
-					}.bind(this));
-				}else if(message.info === 1){
-				}else{
-					//database.ref('chat_messages').child(snapshot.key).set(null);
+				if(((message.from && message.from === uid) || (message.to && message.to === uid))){
+					delete message.id;
+					storage.insertMessages(message);
 				}
 			}
-		}.bind(this));
+		}.bind(target));
 		this.database.ref('chat_messages').on("child_changed", function(snapshot) {
 			if(snapshot.val()){
 				var message = snapshot.val();
-				/*storage.insertMessages(message, function(){
-					console.log('Updated');
-				});*/
+				storage.insertMessages(message);
 			}
-			//console.log(snapshot.key)
-			/*tharak.removeMessages({msgDateTime: snapshot.key}, function(){
-				
-			});*/
-			
-		});
+		}.bind(target));
 		this.database.ref('chat_messages').on("child_removed", function(snapshot) {
 			console.log('deleted');
+			var message = snapshot.val();
 			if(snapshot.val()){
-				storage.removeMessages({msgDateTime: snapshot.key}, function(){
-				
-				});
+				storage.removeMessages({msgDateTime: snapshot.key});
 			}
-		});	
+		});
+	}
+	
+	appSignIn(userName, sucessCallback, failureCallback){
+		var user = auth.currentUser;
+		if(user){
+			provider.fillContacts(this);
+			sucessCallback(userName);
+		}else{
+			auth.signInWithEmailAndPassword(userName+'@gmail.com', 'Test@123').then(function(sucessCallback, result){
+					localStorage.setItem("userId", result.user.uid);
+					provider.fillContacts(this);
+					sucessCallback(userName);
+				}.bind(this, sucessCallback)).catch(function(failureCallback, error) {
+				console.log(error)
+				if(error.code == "auth/user-not-found"){
+					localStorage.removeItem("userName");
+					localStorage.removeItem("userId");
+					failureCallback(error);
+				}
+			}.bind(this, failureCallback));
+		}
+	}
+	insertImages(data){
+		var source = 'chat_images/'+data.msgDateTime;
+		var insert = this.database.ref(source);
+		delete data.id;
+		insert.set(data);
+	}
+	removeImages(data){
+		var updData = {};
+		delete data.id;
+		var source = 'chat_images/'+data.msgDateTime;
+		var insert = this.database.ref(source);
+		insert.update(updData);
+	}
+	getImages(data, callback){
+		var updData = {};
+		delete data.id;
+		var source = 'chat_images/'+data.msgDateTime;
+		this.database.ref(source).once('child_added', function(snapshot){
+			if(snapshot.val()){
+				var message = snapshot.val();
+				callback(message);
+			}
+		});
 	}
 }

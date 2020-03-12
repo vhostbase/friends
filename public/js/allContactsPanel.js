@@ -9,7 +9,7 @@ class allContactsPanel extends BaseClass
 		$('.fab').addClass('d-none');
 	}
 	callNewGroup(){
-		app.navigateTo('createGroupPanel');
+		app.navigateTo(createGroupPanel);
 	}
 	postShow(){
 		this.fireFab();
@@ -20,7 +20,8 @@ class allContactsPanel extends BaseClass
 		var uid = Utility.getCurrentUserId();
 		var conts = [];
 		var showCallback = this.showChat.bind(this);
-		storage.getAllContacts(null, function(rows){
+		var crit = null;//{join : {with: 'IMAGE_STORE', on: "CHAT_CONTACTS.id=IMAGE_STORE.id", type:"Left"}};
+		storage.getAllContacts(crit, function(rows){
 			for(var idx=0; idx<rows.length; idx++){
 				var value = rows.item(idx);
 				if(uid === value.id || (value.members && value.members.indexOf(uid) === -1)){
@@ -35,10 +36,12 @@ class allContactsPanel extends BaseClass
 			}.bind(this));*/
 		}.bind(this));
 	}
+
 	loadContacts(contact, callback){
 		var contactHtml = $(Utility.loadContactTemplate(contact, null));
 		contactHtml.click(callback);
 		this.getWidgetByPath('.list-chats').append(contactHtml);
+
 	}
 	loadContactSrch(conts){
 		this.getWidgetByPath('#searchHdr').empty();
@@ -91,7 +94,7 @@ class allContactsPanel extends BaseClass
 		var info = selectChat.find('#info').text();
 		var id = selectChat.find('#contactId').text();
 
-		app.navigateTo('chatbody', {'pic':pic, 'name': name, 'info': info, 'id': id});
+		app.navigateTo(chatbody, {'pic':pic, 'name': name, 'info': info, 'id': id});
 		//chatbody.show();
 		//this.getWidgetByPath('.fa-arrow-left').click();
 		//frmStack.pop();

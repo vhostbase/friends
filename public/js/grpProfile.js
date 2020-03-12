@@ -69,12 +69,12 @@ class grpProfile extends BaseClass
 			data.members.push($(contacts[idx]).text());
 		}
 		provider.updateContact(data.id, data, function(){
-			app.navigateTo('chatbody');
+			app.navigateTo(chatbody);
 		}.bind(this));
 	}
 	addParticipants(){
 		var contacts = this.getWidgetByPath('.list-contact-details li #contactId');
-		app.navigateTo('createGroupPanel', {mode:1, chatterId : this.chatterId, contacts : contacts});
+		app.navigateTo(createGroupPanel, {mode:1, chatterId : this.chatterId, contacts : contacts});
 	}
 	postShow(){
 		var chatterName = this.chatterName;
@@ -97,7 +97,7 @@ class grpProfile extends BaseClass
 			return;
 		}
 		this.getWidgetByPath('.list-contact-details').empty();
-		storage.getAllContacts('id ="'+chatterId+'"', function(rows){
+		storage.getAllContacts({where : {id :chatterId}}, function(rows){
 			if(rows.length>0){
 				var value = rows.item(0);
 				if(value.members){						
@@ -115,7 +115,7 @@ class grpProfile extends BaseClass
 		}.bind(this));
 	}
 	fetchContacts(ids){
-		storage.getAllContacts('id in('+ids+')', function(rows){
+		storage.getAllContacts({where : {id :{in : ids}}}, function(rows){
 			for(var idx=0; idx<rows.length; idx++){
 				var contact = rows.item(idx);
 				if(contact.id === Utility.getCurrentUserId()){
@@ -138,7 +138,7 @@ class grpProfile extends BaseClass
 		this.addGroupPic(chatterPic);
 		this.addGroupLabel(chatterName);
 		var target = this;
-		storage.getAllContacts('id ="'+chatterId+'"', function(rows){
+		storage.getAllContacts({where : {id : chatterId}}, function(rows){
 			if(rows.length>0){
 				var value = rows.item(0);
 				if(value.members){						
@@ -150,7 +150,7 @@ class grpProfile extends BaseClass
 						ids += '"'+members[idx]+'"';
 						
 					}
-					storage.getAllContacts('id in('+ids+')', function(rows){
+					storage.getAllContacts({where : {id :{in : members}}}, function(rows){
 						for(var idx=0; idx<rows.length; idx++){
 							var contact = rows.item(idx);
 							if(contact.id === Utility.getCurrentUserId()){

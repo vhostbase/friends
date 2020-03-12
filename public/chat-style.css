@@ -105,6 +105,7 @@ hr{
 .my-chat{
     display: flex;
     justify-content: flex-end;
+	padding-bottom: 15px;
 }
 .msg .options {
 	position: relative;
@@ -145,7 +146,7 @@ hr{
     padding : 20px 10px;
 	overflow-y: hidden;
     overflow-x:hidden;
-	height: 80%;
+	height: 90%;
 	width: 100%;
 }
 .circled-image{
@@ -153,7 +154,7 @@ hr{
 	height:48px;
 }
 .circled-image-profile{
-	width:264px; 
+	width:210px; 
 	height:210px;
 }
 .cursor-class{
@@ -385,4 +386,128 @@ span.step {
 }
 .no-scroll{
 	overflow: hidden;
+}
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; /* make scrollbar transparent */
+}
+.icon-viewed{
+	color:green;
+}
+
+/* Compose */
+
+.conversation-compose {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  overflow: hidden;
+  height: 50px;
+  width: 100%;
+  z-index: 2;
+}
+
+.conversation-compose div,
+.conversation-compose input {
+  background: #fff;
+  height: 100%;
+}
+
+.conversation-compose .emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 5px 0 0 5px;
+  flex: 0 0 auto;
+  /*margin-left: 8px;*/
+  width: 48px;
+}
+
+.conversation-compose .input-msg {
+  border: 0;
+  /*flex: 1 1 auto;*/
+  font-size: 16px;
+  margin: 0;
+  outline: none;
+  /*min-width: 50px;*/
+}
+
+.conversation-compose .photo {
+  flex: 0 0 auto;
+  border-radius: 0 0 5px 0;
+  text-align: center;
+  position: relative;
+  padding-left: 5px;
+  padding-right: 2px;
+}
+
+.conversation-compose .photo:after {
+  border-width: 0px 0 10px 10px;
+  border-color: transparent transparent transparent #fff;
+  border-style: solid;
+  position: absolute;
+  width: 0;
+  height: 0;
+  content: "";
+  top: 0;
+  right: -10px;
+}
+
+.conversation-compose .photo i {
+  display: block;
+  color: #7d8488;
+  font-size: 24px;
+  transform: translate(-50%, -50%);
+  position: relative;
+  top: 50%;
+  left: 50%;
+}
+
+.conversation-compose .send {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  margin-left: 8px;
+  /*margin-right: 8px;*/
+  padding: 0;
+  position: relative;
+  outline: none;
+}
+
+.conversation-compose .send .circle {
+  background: #008a7c;
+  border-radius: 50%;
+  color: #fff;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.conversation-compose .send .circle i {
+  font-size: 24px;
+}
+
+#chatter-capture {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  z-index: -100;
+  transform: translate(-50%, -50%);
+}
+
+.large-12.columns{
+	text-align: center;
+}
+
+ul.button-group{
+	display: inline-block;
 }

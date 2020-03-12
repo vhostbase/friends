@@ -7,63 +7,100 @@ $( document ).ready(function() {
 	provider = new Provider();
 	storage = new Storage();
 	auth = provider.auth;
-	app = new app();
+	app = new appClass();
 	app.initialize();
-	app.navigateTo('chatads', {});
+	app.navigateTo(chatads, {});
 });
-class app
+class appClass
 {
+	registerSync(formObj){
+		this.syncObjects.push(formObj);
+	}
 	initialize(){
-		function onBack(frmObj, parent){
-			var backCallback = function(event) {
-				if(parent.frmStack.length > 1){
-					var formId = parent.frmStack.pop();
-					formId.onBack();
-					formId.hide();
-				}
-				let oldFrm = this.frmStack[parent.frmStack.length-1];
-				oldFrm.isBack = true;
-				oldFrm.fromBack();
-				oldFrm.show();
-				
-			};
-			$('#'+frmObj.id+' .fa-arrow-left').unbind('click');
-			$('#'+frmObj.id+' .fa-arrow-left').click(backCallback.bind(parent));
-		}
-		var registerForm = function(formList, formElem){
-			var formObj = new formElem();
-			formObj.id = formElem.name;
-			var options = {root: document.documentElement};
-			var callback = function(mutationsList, observer) {
-				mutationsList.forEach(mutation => {
-					if (mutation.attributeName === 'class' && mutation.target.className.indexOf('d-none') === -1) {
-						delete formObj.isBack;
-						onBack(formObj, this);
-					}
-				})
-			}
-			const mutationObserver = new MutationObserver(callback.bind(this));
-			console.log('Called '+formObj.id);
-			mutationObserver.observe($('#'+formObj.id)[0], { attributes: true });
-			formList[formObj.id] = formObj;
-		}.bind(this);
 		this.frmStack = [];
 		this.formList = {};
-		registerForm(this.formList, ImageCropper);
-		registerForm(this.formList, newGrpPanel);
-		registerForm(this.formList, userProfile);
-		registerForm(this.formList, register);
-		registerForm(this.formList, createGroupPanel);
-		registerForm(this.formList, allContactsPanel);
-		registerForm(this.formList, grpProfile);
-		registerForm(this.formList, contactPanel);
-		registerForm(this.formList, chatbody);
-		registerForm(this.formList, chgProfile);
-		registerForm(this.formList, chatads);
+		this.callbacks = [];
+		this.syncObjects = [];
+		window.addEventListener('online',  function(event){
+			this.isOnline = true;
+			console.log('online');
+			provider.fillContacts();
+			//provider.fillMessages();
+		}.bind(this));
+		window.addEventListener('offline', function(event){
+			this.isOnline = false;
+			console.log('offline');
+		}.bind(this));
+		this.timerId = window.setInterval(function(){
+			if(app.isAppOnline()){
+				for(var idx=0; idx<this.syncObjects.length; idx++){
+					var syncObject = this.syncObjects[idx];
+					syncObject.loadSync();
+				}
+			}
+		}.bind(this, ), 20*1000);// Forevery 2 secs
 	}
-	
-	navigateTo(id, input){
-		var formObj = this.formList[id];
+	isAppOnline(){
+		return navigator.onLine;
+	}
+	registerCallbacks(callback){
+		if(navigator.onLine){
+		  this.isOnline = true;
+			callback();
+		 } else {
+			this.isOnline = false;
+		 }
+		this.callbacks.push(callback);
+	}
+	updDefaultBack(){
+		this.onBack(app.getCurrentForm(), this);
+	}
+	onBack(frmObj, parent){
+		var backCallback = function(event) {
+			if(parent.frmStack.length > 1){
+				var formId = parent.frmStack.pop();
+				formId.onBack();
+				parent.hide(formId);
+			}
+			let oldFrm = app.frmStack[parent.frmStack.length-1];
+			oldFrm.isBack = true;
+			oldFrm.fromBack();
+			app.show(oldFrm);
+			
+		};
+		this.updateBack(frmObj, backCallback.bind(parent));
+		/*$('#'+frmObj.id+' .fa-arrow-left').unbind('click');
+		$('#'+frmObj.id+' .fa-arrow-left').click(backCallback.bind(parent));*/
+	}
+	updateBack(frmObj, backCallback){
+		$('#'+frmObj.id+' .fa-arrow-left').unbind('click');
+		$('#'+frmObj.id+' .fa-arrow-left').click(backCallback);
+	}
+	registerForm(formList, formElem){
+		var formObj = new formElem();
+		formObj.id = formElem.name;
+		var options = {root: document.documentElement};
+		var callback = function(mutationsList, observer) {
+			mutationsList.forEach(mutation => {
+				if (mutation.attributeName === 'class' && mutation.target.className.indexOf('d-none') === -1) {
+					delete formObj.isBack;
+					this.onBack(formObj, this);
+				}
+			})
+		}
+		const mutationObserver = new MutationObserver(callback.bind(this));
+		console.log('Called '+formObj.id);
+		mutationObserver.observe($('#'+formObj.id)[0], { attributes: true });
+		this.formList[formObj.id] = formObj;
+	}
+	findForm(frmClass){		
+		if(this.formList.length === 0 || !this.formList[frmClass.name]){
+			this.registerForm(this.formList, frmClass);
+		}
+		return this.formList[frmClass.name];
+	}
+	navigateTo(frmClass, input){
+		var formObj = this.findForm(frmClass);
 		formObj.preShow(input);
 		if(input)
 			formObj.onNavigate(input);
@@ -74,8 +111,9 @@ class app
 		let oldFrm;
 		if(this.frmStack.length > 0){
 			oldFrm = this.frmStack[this.frmStack.length-1];
+			oldFrm.onHide();
 			if(!this.isBack)
-				oldFrm.hide();
+				this.hide(oldFrm);
 			fromObj.previous = oldFrm;
 		}
 
@@ -88,8 +126,14 @@ class app
 			this.frmStack.push(fromObj);
 		}
 	}
+	hide(fromObj){
+		fromObj.getWidgetByPath('').addClass('d-none');
+	}
 	getCurrentForm(){
 		return this.frmStack[this.frmStack.length-1];
+	}
+	stopTimer(){
+		window.clearInterval(this.timerId);
 	}
 }
 function onLoggOff(){
@@ -97,7 +141,8 @@ function onLoggOff(){
 	if(uid){
 		auth.signOut().then(function() {
 			var today = Utility.getFormattedDate(new Date(), LAST_SEEN_FORMAT);
-			provider.updateContacts({id: uid, lastSeen : today});
+			provider.updateContacts({id: uid, lastSeen : today});			
+			app.stopTimer();
 			console.log('Logg off');
 		}).catch(function(error) {
 			console.log(error);

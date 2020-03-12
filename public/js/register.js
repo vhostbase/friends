@@ -46,15 +46,23 @@ class register extends BaseClass
 		this.getWidgetByPath('#contact_nbr').focus();
 	}
 	doRegister(){
+		
+		var control = this.getWidgetByPath('.fa-check');
+		control.unbind('click');
+		control.removeClass('fa-check');
+		control.addClass('fa-spinner fa-pulse');
 		this.adjustFields();
 		var userName = $('#lbl_contact_nbr').text();
-		auth.createUserWithEmailAndPassword(userName+'@gmail.com', 'Test@123').then(function(response){
-			app.navigateTo('chgProfile', {'userName': userName, 'isRegister': true});
-		}).catch(function(error) {
+		auth.createUserWithEmailAndPassword(userName+'@gmail.com', 'Test@123').then(this.authSuccessCallback.bind(this, userName, true)).catch(function(error) {
 			if(error.code === "auth/email-already-in-use"){
-				app.navigateTo('chgProfile', {'userName': userName});
+				provider.appSignIn(userName, this.authSuccessCallback);
 			}
 		}.bind(this));
 		
+	}
+	authErrorCallback(){
+	}
+	authSuccessCallback(userName, isRegister, response){
+		app.navigateTo(chgProfile, {'userName': userName, 'isRegister': isRegister});
 	}
 }

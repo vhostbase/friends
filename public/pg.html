@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+  <title> New Document </title>
+  <meta name="Generator" content="EditPlus">
+  <meta name="Author" content="">
+  <meta name="Keywords" content="">
+  <meta name="Description" content="">
+  <style>
+  body{text-align:center;font-family: 'Open Sans', sans-serif;}
+svg{width:30%;}
+  
+  </style>
+ </head>
+ <body>
+<svg id="animated" viewbox="0 0 100 100">
+  <circle cx="50" cy="50" r="45" fill="#FDB900"/>
+  <path fill="none" stroke-linecap="round" stroke-width="5" stroke="#fff"
+        stroke-dasharray="251.2,0"
+        d="M50 10
+           a 40 40 0 0 1 0 80
+           a 40 40 0 0 1 0 -80">
+    <animate attributeName="stroke-dasharray" from="0,251.2" to="251.2,0" dur="5s"/>           
+  </path>
+  <text id="count" x="50" y="50" text-anchor="middle" dy="7" font-size="20">50%</text>
+</svg>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+var count = $(('#count'));
+$({ Counter: 0 }).animate({ Counter: count.text() }, {
+  duration: 5000,
+  easing: 'linear',
+  step: function () {
+    count.text(Math.ceil(this.Counter)+ "%");
+  }
+});
+</script>
+ </body>
+</html>

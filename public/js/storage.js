@@ -1,207 +1,144 @@
-class Storage
+class Storage extends JSStorage
 {
 	constructor() {
+		super();
 		self = this;
-	}
-	getDatabase(){
-		let dbase;
-		try{
-			dbase = openDatabase('mydb1', '1.0', 'Test DB', 2 * 1024 * 1024);
-		}catch(err){
-
-			console.log(err);
-		}
-		return dbase;
-	}
-	insertMessages(data, callback){
-		let db = Storage.prototype.getDatabase();
-		db.transaction(function (tx) {
-			tx.executeSql('CREATE TABLE IF NOT EXISTS CHAT_MESSAGES(fromAddr, toAddr, msgType, messageText, msgDateTime, status, info)');
-			tx.executeSql('DELETE FROM CHAT_MESSAGES WHERE msgDateTime='+data.msgDateTime);
-			tx.executeSql('INSERT INTO CHAT_MESSAGES(fromAddr,toAddr,msgType, messageText, msgDateTime, status, info) VALUES ("'+data.from+'","'+data.to+'","'+data.type+'","'+data.messageText+'",'+data.msgDateTime+','+data.viewStatus+', '+data.info+' )', [], callback);
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	removeMessages(data, callback){
-		let db = Storage.prototype.getDatabase();
-		db.transaction(function (tx) {
-			tx.executeSql('DELETE FROM CHAT_MESSAGES WHERE msgDateTime='+data.msgDateTime, [], function(status){
-				callback(data);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	removeContact(data, callback){
-		let db = Storage.prototype.getDatabase();
-		db.transaction(function (tx) {
-			tx.executeSql('DELETE FROM CHAT_CONTACTS WHERE id='+data.id, [], function(status){
-				if(callback)
-				callback(data);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	getCount(from, to, crit, callback){
-		let db = Storage.prototype.getDatabase();
-		let query = 'SELECT COUNT(*) FROM CHAT_MESSAGES WHERE ((fromAddr="'+from+'" and toAddr="'+to+'") OR(toAddr="'+from+'" and fromAddr="'+to+'"))';
-		if(crit){
-			query +=' and '+crit;
-		}
-		db.transaction(function (tx) {
-			tx.executeSql(query, [], function (tx, results) {
-				if(results.rows.length > 0)
-					callback(results);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	getMessages(from, to, crit, callback){
-		let db = Storage.prototype.getDatabase();
-		let query = 'SELECT * FROM CHAT_MESSAGES WHERE ((fromAddr="'+from+'" and toAddr="'+to+'") OR(toAddr="'+from+'" and fromAddr="'+to+'"))';
-		if(crit){
-			query +=' and '+crit;
-		}
-		db.transaction(function (tx) {
-			tx.executeSql(query, [], function (tx, results) {
-				if(results.rows.length > 0)
-					callback(results);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	getContactMessages(from, to, crit, callback){
-		let db = Storage.prototype.getDatabase();
-		let query = 'SELECT CC.name name,CM.fromAddr fromAddr, CM.toAddr toAddr, CM.msgType msgType, CM.messageText messageText, CM.msgDateTime msgDateTime, CM.status status, CM.info info FROM CHAT_MESSAGES CM LEFT JOIN CHAT_CONTACTS CC ON (CM.fromAddr = CC.id OR CM.toaddr = CC.id) WHERE CM.toAddr IN("'+from+'", "'+to+'") and CM.fromAddr IN("'+from+'", "'+to+'") AND CM.info = 0';
-		if(crit){
-			query +=' and '+crit;
-		}
-		db.transaction(function (tx) {
-			tx.executeSql(query, [], function (tx, results) {
-				if(results.rows.length > 0)
-					callback(results.rows);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	getGroupMessages(from, to, crit, callback){
-		let db = Storage.prototype.getDatabase();
-		let query = 'SELECT CC.name name,CM.fromAddr fromAddr, CM.toAddr toAddr, CM.msgType msgType, CM.messageText messageText, CM.msgDateTime msgDateTime, CM.status status, CM.info info FROM CHAT_MESSAGES CM LEFT JOIN CHAT_CONTACTS CC ON (CC.id = CM.fromAddr) WHERE CM.toaddr = "'+to+'"';
-		if(crit){
-			query +=' and '+crit;
-		}
-		db.transaction(function (tx) {
-			tx.executeSql(query, [], function (tx, results) {
-				if(results.rows.length > 0)
-					callback(results.rows);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	insertContact(data){
-		let db = Storage.prototype.getDatabase();
-		db.transaction(function (tx) {
-			tx.executeSql('CREATE TABLE IF NOT EXISTS CHAT_CONTACTS(id, lastSeen, name, number, pic, members)');
-			tx.executeSql('DELETE FROM CHAT_CONTACTS WHERE id="undefined"');
-			tx.executeSql('DELETE FROM CHAT_CONTACTS WHERE id="'+data.id+'"');
-			var currentUser = auth.currentUser;
-			var uid = currentUser.uid;
-			if(data.members){
-				if(data.members.indexOf(uid) > -1)
-					tx.executeSql('INSERT INTO CHAT_CONTACTS(id, lastSeen, name, number, pic, members) VALUES ("'+data.id+'","'+data.lastSeen+'","'+data.name+'","'+data.number+'","'+data.pic+'", "'+data.members+'" )');
-			}else{
-				tx.executeSql('INSERT INTO CHAT_CONTACTS(id, lastSeen, name, number, pic) VALUES ("'+data.id+'","'+data.lastSeen+'","'+data.name+'","'+data.number+'","'+data.pic+'")');
-			}		
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	getContact(message, crit, callback){
-		let db = Storage.prototype.getDatabase();
-		let query = 'SELECT * FROM CHAT_CONTACTS WHERE ((id="'+message.to+'") OR(id="'+message.from+'"))';
-		if(crit){
-			query +=' and '+crit;
-		}
-		db.transaction(function (tx) {
-			tx.executeSql(query, [], function (tx, results) {
-				if(results.rows.length > 0)
-					callback(results);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	convertToIn(list){
-		var data = "(";
-		var idx=0;
-		list.forEach((item)=>{
-			if(idx > 0)
-				data = data.concat(',');
-			data = data.concat('"').concat(item).concat('"');
-			idx++;
-		});
-		data = data.concat(')');
-		return data;
-	}
-	getContactByCrit(crit, callback){
-		let db = Storage.prototype.getDatabase();
-		let query = 'SELECT * FROM CHAT_CONTACTS ';
-		if(crit)
-			query +=crit;
-		db.transaction(function (tx) {
-			tx.executeSql(query, [], function (tx, results) {
-				if(results.rows.length > 0)
-					callback(results.rows);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
-	}
-	getContactByNotInCrit(list, crit, callback){
-		let db = Storage.prototype.getDatabase();
-		let query = 'SELECT * FROM CHAT_CONTACTS';
-		if(crit)
-			query +=crit;
-		else{
-			if(list){
-				if(Array.isArray(list)){
-					if(list.length > 1)
-						query +=' WHERE id NOT IN'+this.convertToIn(list);
-					else if(list.length === 1)
-						query +=' WHERE id !="'+list[0]+'"';
-				}else{
-					query +=' WHERE id !="'+list+'"';
+		let tables = [];
+		let CHAT_MESSAGES = {
+			name: 'CHAT_MESSAGES',
+			columns: {
+				id: {
+					primaryKey: true,
+					autoIncrement: true
+				},
+				from: {
+					notNull: false,
+					dataType: 'string'
+				},
+				to: {
+					notNull: false,
+					dataType: 'string'
+				},
+				type: {
+					notNull: true,
+					dataType: 'string'
+				},
+				deletedBy:{
+					notNull: false,
+					dataType: 'array'
+				},
+				messageText: {
+					dataType: 'string',
+					notNull: true
+				},
+				msgDateTime: {
+					dataType: 'number',
+					notNull: true
+				},
+				viewStatus: {
+					dataType: 'number',
+					notNull: true
+				},
+				mediaData:{
+					dataType: 'string',
+					notNull: false
+				},
+				info: {
+					dataType: 'number',
+					notNull: false
 				}
 			}
-		}
-		db.transaction(function (tx) {
-			tx.executeSql(query, [], function (tx, results) {
-				if(results.rows.length > 0)
-					callback(results);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
+		};
+		tables.push(CHAT_MESSAGES);
+		let CHAT_CONTACTS = {
+			name: 'CHAT_CONTACTS',
+			columns: {
+				id: {
+					primaryKey: true,
+					dataType: 'string'
+				},
+				lastSeen: {
+					notNull: true,
+					dataType: 'string'
+				},
+				name: {
+					dataType: 'string'
+				},
+				number: {
+					notNull: true,
+					dataType: 'string'
+				},
+				pic: {
+					dataType: 'string',
+					notNull: false
+				},
+				picFile: {
+					dataType: 'string',
+					notNull: false
+				},				
+				members: {
+					dataType: 'string',
+					notNull: false
+				}
+			}
+		};
+		tables.push(CHAT_CONTACTS);
+		let CHAT_IMAGES = {
+			name: 'CHAT_IMAGES',
+			columns: {
+				id: {
+					primaryKey: true,
+					dataType: 'string'
+				},
+				imgType : {
+					dataType: 'string'
+				},
+				imgData: {
+					notNull: true,
+					dataType: 'string'
+				},
+				fileName: {
+					notNull: false,
+					dataType: 'string'
+				}
+			}
+		};
+		tables.push(CHAT_IMAGES);
+		this.initDb(tables);
+	}
+
+	insertMessages(data, callback){
+		var crit = {msgDateTime : parseInt(data.msgDateTime)};
+		this.insert('CHAT_MESSAGES', crit, data, callback);
+	}
+	removeMessages(data, callback){
+		var crit = {msgDateTime : parseInt(data.msgDateTime)};
+		this.remove('CHAT_MESSAGES', crit, data, false, callback);
+	}
+
+	getMessages(crit, callback){
+		this.query('CHAT_MESSAGES', crit, callback);
+	}
+	insertContact(data, callback){
+		var crit = {id : data.id};
+		this.insert('CHAT_CONTACTS', crit, data, callback);
+	}
+	removeContact(data, callback){
+		var crit = {id : data.id};
+		this.remove('CHAT_CONTACTS', crit, data, false, callback);
 	}
 	getAllContacts(crit, callback){
-		let db = Storage.prototype.getDatabase();
-		let query = 'SELECT * FROM CHAT_CONTACTS';
-		if(crit){
-			query +=' where '+crit;
-		}
-		db.transaction(function (tx) {
-			tx.executeSql(query, [], function (tx, results) {
-				if(results.rows.length > 0)
-					callback(results.rows);
-			});
-		},function errorCB(tx, err) {
-			console.log(tx);
-		});
+		this.query('CHAT_CONTACTS', crit, callback);
+	}
+	insertImage(data, callback){
+		var crit = {id : data.id};
+		this.insert('IMAGE_STORE', crit, data, callback);
+	}
+	removeImage(data, callback){
+		var crit = {id : data.id};
+		this.remove('IMAGE_STORE', crit, data, false, callback);
+	}
+	getImage(crit, callback){
+		this.query('IMAGE_STORE', crit, callback);
 	}
 }

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" manifest="halma.appcache">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src='font/font.js'></script>
+	<!-- <link rel="stylesheet" href="releases/v5.0.10/css/all.css" crossorigin="anonymous"> -->
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/cropper/2.3.4/cropper.min.css'>
+    <link rel="stylesheet" href="./load-style.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- My style -->
+    <link rel="stylesheet" href="chat-style.css">
+    <title>FriendShip</title>
+  </head>
+  <body>
+  <script src="jquery/jquery-1.12.4.min.js"></script>
+   	<script src="firebasejs/7.6.1/firebase-app.js"></script>
+	<script src="firebasejs/7.6.1/firebase-auth.js"></script>
+	<script src="firebasejs/7.6.1/firebase-database.js"></script>
+	<script src="firebasejs/7.6.1/firebase-storage.js"></script>
+  <script>
+			var config = {
+				apiKey: "AIzaSyD7Xp9dGNT2D7jMBopG9dN3nuL4BcFNX_g",
+				authDomain: "friendship-d566b.firebaseapp.com",
+				databaseURL: "https://friendship-d566b.firebaseio.com/",
+				storageBucket: "friendship-d566b.appspot.com"
+			  };
+			firebase.initializeApp(config);
+	function downloadFile(){
+		var storageRef = firebase.storage().ref();
+		var mountainsRef = storageRef.child('gs://friendship-d566b.appspot.com/ProfileImages/IMG-20191030-WA0000.jpg');
+		//var mountainsRef = storageRef.child(folder+fileName);
+		var downloadTask = mountainsRef.getDownloadURL();
+		downloadTask.on('state_changed', function(snapshot){
+			var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+			  console.log('Upload is ' + progress + '% done');
+			  switch (snapshot.state) {
+				case firebase.storage.TaskState.PAUSED: // or 'paused'
+				  console.log('Upload is paused');
+				  break;
+				case firebase.storage.TaskState.RUNNING: // or 'running'
+				  console.log('Upload is running');
+				  break;
+			  }
+		}, function(error) {
+		  // Handle unsuccessful uploads
+		}, function(data) {
+			console.log(data);
+		});
+	}
+	downloadFile();
+  </script>
+
+    </body>
+</html>

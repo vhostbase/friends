@@ -2,38 +2,97 @@ class chatbody extends BaseClass
 {
 	constructor(){
 		super();
-		this.getWidgetByPath('.enter-chat .input-box #inputMsg').keyup(this.flipControl.bind(this));
+		this.getWidgetByPath('.enter-chat #inputMsg').keyup(this.flipControl.bind(this));
 		this.getWidgetByPath('.fa-paperclip').click(this.callAttach.bind(this));
 		this.getWidgetByPath('#ipControl').click(this.sendTxtMessage.bind(this));
 		this.getWidgetByPath('#attachImg').change(this.uploadImageMsg.bind(this));
 		this.getWidgetByPath('.fa-camera').click(this.takePhoto.bind(this));
+		app.registerSync(this);
 	}
 	onNavigate(data){
+		if(data.messageType === 'image'){
+			this.imageMsgData = data;
+			return;
+		}
+		this.data = data;		
+	}
+	loadSync(){
+		var uid = Utility.getCurrentUserId();
+		var crit = null;
+		storage.getMessages(crit, function(results){
+			for(var idx=0; idx<results.length; idx++){
+				var messageData = results.item(idx);
+				if(messageData.deletedBy && messageData.deletedBy.indexOf(uid) > -1){
+					this.removeMsgExists(messageData, uid);
+				}
+				if(messageData.viewStatus === 0){
+					messageData.viewStatus = 1;
+					provider.insertMessage(messageData, function(messageData){
+						this.updateStatusFlag(messageData);
+					}.bind(this, messageData));
+				}else if(messageData.viewStatus === 1){
+					var today = Utility.getToday();
+					var id = this.chatterId;
+					this.addChatMessage3(messageData, today, id);
+				}else if(messageData.viewStatus === 3 || messageData.viewStatus === 2){
+					this.updateStatusFlag(messageData);
+				}
+			}		
+		}.bind(this));
+	}
+	removeMsgExists(messageData, uid){
+		var chatItem = this.getWidgetByPath('.chat-window #'+messageData.msgDateTime);
+		if(chatItem.length > 0)
+			chatItem.remove();
+		if(messageData.deletedBy && messageData.deletedBy.indexOf(uid) > -1){
+			provider.insertMessage(messageData);
+		}
+	}
+	updateStatusFlag(messageData){
+		if(messageData.viewStatus > 0){
+			var chatItem = this.getWidgetByPath('.chat-window #'+messageData.msgDateTime+' i');
+			if(chatItem.length > 0){
+				if(messageData.viewStatus === 1){
+					chatItem.removeClass('fa-pulse fa-spinner');
+					chatItem.addClass('fa-check');
+				}else if(messageData.viewStatus === 2){
+					chatItem.removeClass('fa-check');
+					chatItem.addClass('fa-check-double');
+				}else if(messageData.viewStatus === 3){
+					chatItem.addClass('fa-check-double icon-viewed');
+				}
+			}
+		}
+	}
+	adjustHeader(data){
 		var pic = data.pic;
-		var name = data.name;
-		var info = data.info;
+		var name = data.name;		
 		var id = data.id;
+		this.chatterId = id;
 		this.getWidgetByPath('#navbar').empty();
-		var chatHdr = this.addChatHeader(pic, name, id, info);
+		var chatHdr = this.addChatHeader(pic, name);
 		this.getWidgetByPath('#navbar').append(chatHdr);
-		this.getWidgetByPath('#chatId').val(id);
-		if(info === 'group'){
-			this.getWidgetByPath('#info').val(1);
+		this.info = data.info;
+		if(this.info === 1){
 			this.getWidgetByPath('#chatMenu').empty();
 			this.getWidgetByPath('#chatMenu').append($(this.getGroupChatMenuTemplate()));
 			this.getWidgetByPath('#bodyProfile').click(this.loadGroupProfileData.bind(this));
 		}else{
-			this.getWidgetByPath('#info').val(0);
 			this.getWidgetByPath('#chatMenu').empty();
 			this.getWidgetByPath('#chatMenu').append($(this.getContactChatMenuTemplate()));
 			this.getWidgetByPath('#bodyProfile').click(this.loadProfileData.bind(this));
 		}
-		this.showContactChat(id, parent, info);
+		this.showContactChat();
 	}
 	adjustFields(){
 		this.getWidgetByPath("").scrollTop(this.getWidgetByPath("")[0].scrollHeight);
 	}
-	postShow(){
+	postShow(){		
+		if(this.imageMsgData){
+			this.sendMessage(this.imageMsgData.messageText, this.imageMsgData.messageType, this.imageMsgData.imgData);
+		}else{
+			this.adjustHeader(this.data);
+		}
 		$('.fab').addClass('d-none');		
 		this.getWidgetByPath(".container").scrollTop(this.getWidgetByPath(".container")[0].scrollHeight);
 	}
@@ -41,17 +100,12 @@ class chatbody extends BaseClass
 		var file = event.target.files[0];
 		var fileType = file.type;
 		var msgType = fileType.substr(0, fileType.indexOf('/'))
-		if(msgType === 'video'){
-			this.uploadMedia(file, fileType);
-		}
-		var image = $('#chatImgbody #imgMsg');
-		image.attr('src', '');
+		var image = {src: '', alt: file.name};
 		var reader = new FileReader();
 		reader.onloadend = function() {
 			if(msgType === 'image'){
-				image.attr('src', reader.result);
-				 $('#chatImgbody').removeClass('d-none');
-				 $('#chatbody').addClass('d-none');
+				image.src = reader.result;
+				 app.navigateTo(chatimg, image);
 			}else{
 				this.sendMessage('media', msgType, reader.result);
 			}
@@ -89,7 +143,7 @@ class chatbody extends BaseClass
 			console.log('File available at', downloadURL);
 			this.sendMessage('media', msgType, downloadURL);
 		  }.bind(this));
-		});
+		}.bind(this));
 	}
 	flipControl(event){
 		var data = event.currentTarget.value;
@@ -112,17 +166,23 @@ class chatbody extends BaseClass
 		if(this.getWidgetByPath('#inputControl').hasClass('fa-microphone')){
 			recordVoice();
 		}else{
+			var imgData = '';
+			var type;
+			if(event.imgData){
+				imgData = event.imgData;
+				type = event.type;
+			}
 			var txtData = this.getWidgetByPath('#inputMsg').val();
 			this.getWidgetByPath('#inputMsg').val("");
 			this.flipControl({currentTarget: {value : ''}});
-			this.sendMessage(txtData, '');
+			this.sendMessage(txtData, type, imgData);
 		}
 	}
 	sendMessage(txtData, type, imgData){
 		var msgTime = Utility.getCurrentDateTime();
-		var id = this.getWidgetByPath('#chatId').val();
+		var id = this.chatterId;
 		var currId = Utility.getCurrentUserId();
-		var info = parseInt(this.getWidgetByPath('#info').val());
+		var info = this.info;
 		var messageData = {};
 		messageData.messageText = txtData;
 		messageData.to = id;
@@ -136,58 +196,66 @@ class chatbody extends BaseClass
 			messageData.mediaData = imgData;
 		}
 		var chatDate = Utility.getFormattedDate(new Date(), DATE_FORMAT);
-		provider.insertMessage(messageData, function(msgTime){
-			this.addChatMessage2(messageData, chatDate, {uid:currId}, id);
-		}.bind(this));
+		this.addChatMessage2(messageData, chatDate, id);
+		storage.insertMessages(messageData);
+	}
+	updMsgViewStatus(messageData){
+		var status = this.getWidgetByPath('#'+messageData.msgDateTime+' i');
+		status.removeClass('fa-spinner fa-pulse');
+		status.addClass('fa-check');
 	}
 	callAttach(){
-		this.getWidgetByPath('#attachImg').attr('accept', 'audio/*,video/*,image/*');
+		$('#myModal .modal-body .list-group-perms').empty();
+		Utility.attachmentItems(['Documents', 'Camera', 'Gallery'], $('#myModal .modal-body .list-group-perms'), this.onSelectAttachItem.bind(this));
+		$('#dialogId').click();
+	}
+	onSelectAttachItem(event){
+		var selected = $(event.currentTarget).text();
+		if("Documents" === selected){
+			this.getWidgetByPath('#attachImg').attr('accept', 'application/msword, application/vnd.ms-excel, application/vnd.ms-powerpoint,text/plain, application/pdf');
+		}else if('Camera' === selected){
+			this.getWidgetByPath('#attachImg').attr('accept', 'image/*;capture=camera');
+		}else if('Gallery' === selected){
+			this.getWidgetByPath('#attachImg').attr('accept', 'image/*, video/*');
+		}
 		this.getWidgetByPath('#attachImg').click();
+		$('#dialogId').click();
 	}
 	loadProfileData(){
 		var chatterName = this.getWidgetByPath('#bodyProfile #contactName2').text();		
-		var chatterId = this.getWidgetByPath('#chatId').val();
+		var chatterId = this.chatterId;//this.getWidgetByPath('#chatId').val();
 		var chatterPic = this.getWidgetByPath('#navbar #contactPhoto2').attr('src');
-		app.navigateTo('userProfile', {'chatterName': chatterName, 'chatterId': chatterId, 'chatterPic': chatterPic});
+		app.navigateTo(userProfile, {'chatterName': chatterName, 'chatterId': chatterId, 'chatterPic': chatterPic});
 	}
 	loadGroupProfileData(){
 		var chatterName = this.getWidgetByPath('#bodyProfile #contactName2').text();		
-		var chatterId = this.getWidgetByPath('#chatId').val();
+		var chatterId = this.chatterId;//this.getWidgetByPath('#chatId').val();
 		var chatterPic = this.getWidgetByPath('#navbar #contactPhoto2').attr('src');
-		app.navigateTo('grpProfile', {'chatterName': chatterName, 'chatterId': chatterId, 'chatterPic': chatterPic});
+		app.navigateTo(grpProfile, {'chatterName': chatterName, 'chatterId': chatterId, 'chatterPic': chatterPic});
 	}
-	showContactChat(id, parent, info){
+	showContactChat(parent){
 		this.getWidgetByPath('.chat-window').empty();
 		this.getWidgetByPath('.chat-window').css('overflow-y', 'hidden');
 		if(parent !== 'allContactsPanel'){
-			if(info === 'group'){
+			if(this.info === 1){
 				this.showContactGroupChat();
 			}else{
 				this.showContactChatMsg();
 			}
 		}
 	}
-	showContactChat4(message){
-		if(this.getCurrentForm() === 'chatbody'){
-			return;
-		}
-		if(message.from !== Utility.getCurrentUserId())
-			message.status = 1;
-		var chatDate = Utility.getFormattedDate(new Date(message.msgDateTime), DATE_FORMAT);
-		this.addChatMessage2(message, chatDate, {uid:message.to}, message.from);
-		if(message.from !== Utility.getCurrentUserId()){
-			provider.updateMessage({msgDateTime: message.msgDateTime, status : 1}, function(msgId){
-				console.log(msgId);
-			});
-		}
-	}
-	addChatHeader(pic, name, id, info){
+	addChatHeader(pic, name){
 		var hdrHtml = '';
 		hdrHtml += '<div class="d-block d-sm-none"><i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;"></i></div>';
-		hdrHtml += '<span><img id="contactPhoto2" src="'+pic+'" alt="Profile Photo" class="img-fluid rounded-circle mr-2" style="height:50px;" id="pic"></span>';
+		hdrHtml += '<span><img id="contactPhoto2" src="'+pic+'" alt="Profile Photo" class="img-fluid rounded-circle mr-2 circled-image" style="height:50px;" id="pic"></span>';
 		hdrHtml += '<div id="bodyProfile" class="d-flex flex-column"><div class="text-white font-weight-bold" id="contactName2">'+name+'</div><div class="text-white small" id="details">at 5:28 PM</div></div>';
-		hdrHtml += '<div class="d-flex flex-row align-items-center ml-auto"><span class="cursor-class"><i class="fas fa-phone mx-3 text-white d-md-block"></i></span><span class="cursor-class"><i class="fas fa-video mx-3 text-white d-md-block"></i></span><span class="cursor-class" data-toggle="dropdown"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></span><div id="chatMenu" class="dropdown-menu dropdown-menu-right cursor-class"></div></div>';
-		return $(hdrHtml);
+		hdrHtml += '<div class="d-flex flex-row align-items-center ml-auto"><span class="cursor-class"><i class="fas fa-phone mx-3 text-white d-md-block"></i></span><span class="cursor-class"><i id="vcall" class="fas fa-video mx-3 text-white d-md-block"></i></span><span class="cursor-class" data-toggle="dropdown"><i class="fas fa-ellipsis-v mr-2 mx-sm-3 text-white"></i></span><div id="chatMenu" class="dropdown-menu dropdown-menu-right cursor-class"></div></div>';
+		let hdrElem =  $(hdrHtml);
+		hdrElem.find('#vcall').click(this.sendToVideoCall.bind(this));
+		return hdrElem;
+	}
+	sendToVideoCall(){
+		app.navigateTo(videoCall);
 	}
 	getContactChatMenuTemplate(){
 		var template = '';
@@ -206,42 +274,47 @@ class chatbody extends BaseClass
 		return template;
 	}
 	showContactChatMsg(crit){
-		var id = this.getWidgetByPath('#chatId').val();
-		var uid = Utility.getCurrentUserId();		
-		storage.getContactMessages(uid, id, crit, this.showContactChatMsgCallback.bind(this, id));
+		var id = this.chatterId;
+		var uid = Utility.getCurrentUserId();	
+		var crit = {where:{'info': 0, to:{ in: [uid, id]}, from: { in: [uid, id]}}, order: {by: 'msgDateTime', type:'asc'}};
+		storage.getMessages(crit, this.showContactChatMsgCallback.bind(this, id, uid));
 	}
-	showContactChatMsgCallback(id, results){
-		var today = Utility.getFormattedDate(new Date(), DATE_FORMAT);
+	showContactChatMsgCallback(id, uid, results){
+		var today = Utility.getToday();
 		for(var idx=0; idx<results.length; idx++){
 			var item = results.item(idx);
-			if(item.fromAddr){
-				item.from = item.fromAddr;
-				item.to = item.toAddr;
-				item.type = item.msgType;
-			}			
-			this.addChatMessage2(item, today, null, id);
+			if(item.deletedBy && item.deletedBy.indexOf(uid) > -1)
+				continue;
+			this.addChatMessage3(item, today, id);
 			this.updateMsgViewStatus(item);
 		}
+		//this.adjustFields();
 	}
 	showContactGroupChat(crit){
-		var id = this.getWidgetByPath('#chatId').val();
+		var id = this.chatterId;
 		var currentUser = auth.currentUser;
-		var uid = currentUser.uid;		
-		storage.getGroupMessages(uid, id, crit, this.groupChatCallback.bind(this, id, currentUser));
+		var uid = currentUser.uid;
+		var crit = { 'info': 0, to:{ in: [uid, id]}, from: { in: [uid, id]} };
+		storage.getMessages(crit, this.groupChatCallback.bind(this, id, currentUser));
 	}
 	groupChatCallback(id, currentUser, results){
-		var today = Utility.getFormattedDate(new Date(), DATE_FORMAT);
+		var today = Utility.getToday();
 		for(var idx=0; idx<results.length; idx++){
 			var item = results.item(idx);
 			item.from = item.fromAddr;
 			item.to = item.toAddr;
 			item.type = item.msgType;
 
-			this.addChatMessage2(item, today, currentUser, id);
+			this.addChatMessage3(item, today, id);
 			this.updateMsgViewStatus(item);
 		}
 	}
-	addChatMessage2(item, today, currentUser, id){
+	addChatMessage3(item, today, id){
+		var chatItem = this.getWidgetByPath('.chat-window #'+item.msgDateTime);
+		if(chatItem.length === 0)
+			this.addChatMessage2(item, today, id);
+	}
+	addChatMessage2(item, today, id){
 		if(((item.from === Utility.getCurrentUserId() || item.to === Utility.getCurrentUserId()) && (item.from === id || item.to === id)) || (item.info === 1)){
 			Utility.addScrollBar();
 			var msgDate = Utility.getFormattedDate(new Date(item.msgDateTime), DATE_FORMAT);
@@ -259,8 +332,13 @@ class chatbody extends BaseClass
 		return 0;
 	}
 	updateMsgViewStatus(message){
-		message.viewStatus = 2;
-		provider.updateMessage(message);
+		var uid = Utility.getCurrentUserId();
+		if(message.to === uid){
+			if(message.viewStatus < 3){
+				message.viewStatus = 3;
+				provider.updateMessage(message);
+			}
+		}
 	}
 	addDateForChat(lblDate){
 		var lblDateKey = lblDate;
@@ -281,7 +359,7 @@ class chatbody extends BaseClass
 			return;
 		var msgTime = moment(new Date(chatData.msgDateTime)).format(TIME_FORMAT);
 		var chatHtml = '';
-		chatHtml += '<div id="'+chatData.msgDateTime+'" isview="'+chatData.status+'" class="row user-chat" style="padding-left: 10px;"><div class="msg chat-item-left">';
+		chatHtml += '<div id="'+chatData.msgDateTime+'" class="row user-chat" style="padding-left: 10px;"><div class="msg chat-item-left">';
 		if(chatData.info === 1){
 			chatHtml += '<div class="small font-weight-bold text-primary">'+Utility.getChatterName(chatData)+'</div>';
 		}
@@ -291,7 +369,7 @@ class chatbody extends BaseClass
 		else if(chatData.type.indexOf('audio') > -1)
 			chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><audio controls><source src="'+chatData.mediaData+'" type="'+chatData.type+'"></audio></div></div>';
 		else if(chatData.type.indexOf('video') > -1)
-			chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video width="400" controls><source src="'+chatData.mediaData+'" type="'+chatData.type+'"></video></div></div>';
+			chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video width="400" controls><source src="'+chatData.mediaData+'" type="video/mp4"></video></div></div>';
 		else
 			chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
 		chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">';
@@ -304,12 +382,18 @@ class chatbody extends BaseClass
 		this.getWidgetByPath('.chat-window #'+chatData.msgDateTime).click(this.onSelectMsg.bind(this));
 	}
 	fireContextMenu(event){
-		event.preventDefault();
+		event.preventDefault();		
 		this.getWidgetByPath('#navbar').empty();
-		var chatHdr = addChatDelHeader(event.currentTarget.id);
+		var chatHdr = this.addChatDelHeader(event.currentTarget.id);
+		chatHdr.find('.fa-arrow-left').click(this.showChatBody.bind(this));
+		chatHdr.find('.fa-trash').click(this.removeMsg.bind(this));
 		this.getWidgetByPath('#navbar').append(chatHdr);    
 		this.getWidgetByPath('.chat-window').attr('msg-select', '1');
-		this.getWidgetByPath('.chat-window #'+event.currentTarget.id).addClass('blackBg');
+		$('#chatbody .chat-window #'+event.currentTarget.id).addClass('blackBg');
+	}
+	showChatBody(event){
+		this.adjustHeader(this.data);
+		app.updDefaultBack();
 	}
 	addRightChat(chatData){
 		var elem = this.getWidgetByPath('.chat-window').find('#'+chatData.msgDateTime);
@@ -317,7 +401,7 @@ class chatbody extends BaseClass
 			return;
 		var msgTime = moment(new Date(chatData.msgDateTime)).format(TIME_FORMAT);
 		var chatHtml = '';
-		chatHtml += '<div id="'+chatData.msgDateTime+'" isview="'+chatData.status+'" class="row my-chat" onclick="chatbody.onSelectMsg(this)"><div class="msg chat-item-right">';
+		chatHtml += '<div id="'+chatData.msgDateTime+'" class="row my-chat"><div class="msg chat-item-right">';
 		if(chatData.info === 1){
 			chatHtml += '<div class="small font-weight-bold text-primary">'+Utility.getCurrentUserName()+'</div>';
 		}
@@ -327,12 +411,22 @@ class chatbody extends BaseClass
 		else if(chatData.type.indexOf('audio') > -1)
 			chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><audio controls><source src="'+chatData.mediaData+'" type="'+chatData.type+'"></audio></div></div>';
 		else if(chatData.type.indexOf('video') > -1)
-			chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video width="400" controls><source src="'+chatData.mediaData+'" type="'+chatData.type+'"></video></div></div>';
+			chatHtml += '<div class="body m-1 mr-2"><div style="width: 230px; margin-bottom: 10px;"><video width="400" controls><source src="'+chatData.mediaData+'" type="video/mp4"></video></div></div>';
 		else
 			chatHtml += '<div class="body m-1 mr-2">'+chatData.messageText+'</div>';
 		chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">';
 		chatHtml += msgTime;
-		chatHtml += '</div></div></div></div>';
+		chatHtml += '</div>';
+		if(chatData.viewStatus === 0)
+			chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="padding-left: 4px;"><i class="fas fa-spinner fa-pulse"></i></i></div>';
+		else if(chatData.viewStatus === 1)
+			chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="padding-left: 4px;"><i class="fas fa-check"></i></div>';
+		else if(chatData.viewStatus === 2)
+			chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="padding-left: 4px;"><i class="fas fa-check-double"></i></div>';
+		else if(chatData.viewStatus === 3)
+			chatHtml += '<div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="padding-left: 4px;"><i class="fas fa-check-double icon-viewed"></i></div>';
+		chatHtml += '</div></div></div>';
+		$(chatHtml).click(this.onSelectMsg.bind(this));
 		this.getWidgetByPath('.chat-window').append($(chatHtml));
 		this.getWidgetByPath('.chat-window #'+chatData.msgDateTime).bind("contextmenu", function (event) {      
 			this.fireContextMenu(event);
@@ -340,16 +434,16 @@ class chatbody extends BaseClass
 	}
 	onSelectMsg(event){
 		if(this.getWidgetByPath('.chat-window').attr('msg-select')){
-			if(!this.getWidgetByPath('.chat-window #'+event.id).hasClass('blackBg')){
-				this.getWidgetByPath('.chat-window #'+event.id).toggleClass('blackBg');
-				this.getWidgetByPath('#rm-list').append($('<span>'+event.id+'</span>'));
+			if(!this.getWidgetByPath('.chat-window #'+event.currentTarget.id).hasClass('blackBg')){
+				this.getWidgetByPath('.chat-window #'+event.currentTarget.id).toggleClass('blackBg');
+				this.getWidgetByPath('#rm-list').append($('<span>'+event.currentTarget.id+'</span>'));
 			}else{
 				var count = this.getWidgetByPath('#rm-list span').length;
 				for(var idx=0; idx<count; idx++){
 					var id = $(this.getWidgetByPath('#rm-list span')[idx]).text();
 					if(event.id === id){
 						$(this.getWidgetByPath('#rm-list span')[idx]).remove();
-						this.getWidgetByPath('.chat-window #'+event.id).toggleClass('blackBg');
+						this.getWidgetByPath('.chat-window #'+event.currentTarget.id).toggleClass('blackBg');
 					}
 				}
 			}
@@ -364,5 +458,40 @@ class chatbody extends BaseClass
 				this.getWidgetByPath('#navbar').append(chatHdr);
 			}
 		}
+	}
+	addChatDelHeader(id){
+		var hdrHtml = '';
+		hdrHtml += '<div id="delHdr" class="d-block d-sm-none"><i class="fas fa-arrow-left p-2 mr-2 text-white" style="font-size: 1.0rem; cursor: pointer;"></i></div>';
+		hdrHtml += '<div id="rm-count" class="text-white font-weight-bold">0</div>';
+		hdrHtml += '<div id="rm-list" style="display:none"><span>'+id+'</span></div>';
+		hdrHtml += '<div class="d-flex flex-row align-items-center ml-auto">';
+		hdrHtml += '<span class="cursor-class"><i class="fas fa-arrow-circle-left mx-3 text-white d-md-block"></i></span>';
+		hdrHtml += '<span class="cursor-class"><i class="fas fa-trash mx-3 text-white d-md-block"></i></span>';
+		hdrHtml += '<span class="cursor-class"><i class="fas fa-copy mx-3 text-white d-md-block"></i></span>';
+		hdrHtml += '<span class="cursor-class"><i class="fas fa-arrow-circle-right mx-3 text-white d-md-block"></i></span>';
+		hdrHtml += '</div>';
+		return $(hdrHtml);
+	}
+	removeMsg(event){
+		var msgSelects = this.getWidgetByPath('.chat-window').find('.blackBg');
+		for(var idx=0; idx<msgSelects.length; idx++){
+			var msgId = parseInt($(msgSelects[idx]).attr('id'));
+			$(msgSelects[idx]).remove();
+
+			var crit = {where : {msgDateTime : msgId}};
+			storage.getMessages(crit, function(results){
+				if(results.length>0){
+					var msgItem = results.item(0);
+					if(!msgItem.deletedBy){
+						msgItem.deletedBy = [];
+					}
+					msgItem.deletedBy.push(Utility.getCurrentUserId());
+					storage.insertMessages(msgItem);
+				}
+			});
+			
+		}		
+		this.adjustHeader(this.data);
+		app.updDefaultBack();
 	}
 }

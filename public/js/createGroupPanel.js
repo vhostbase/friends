@@ -70,7 +70,7 @@ class createGroupPanel extends BaseClass
 	}
 	createNewGroup(){
 		var selected = this.collectParticipant();
-		app.navigateTo('newGrpPanel', {contacts: selected});
+		app.navigateTo(newGrpPanel, {contacts: selected});
 	}
 	loadContacts(contact){
 		var contactHtml = $(Utility.loadContactTemplate(contact, null, '<span id="CID" style="display:none;">'+contact.id+'</span><i class="d-none fas fa-check-circle"></i>'));
@@ -102,6 +102,6 @@ class createGroupPanel extends BaseClass
 	}
 	loadGrpContacts(selected){
 		$('.fab').addClass('d-none');
-		app.navigateTo('grpProfile', {contacts : selected});		
+		app.navigateTo(grpProfile, {contacts : selected});		
 	}
 }

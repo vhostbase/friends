@@ -2,11 +2,13 @@ class chgProfile extends BaseClass
 {
 	constructor(){
 		super();
-		this.getWidgetByPath('.fa-check').click(this.doChgRegister.bind(this));
+		this.getWidgetByPath('#chgRegister').click(this.doChgRegister.bind(this));
 		this.getWidgetByPath('').on('click', this.adjustFields.bind(this));
 		this.getWidgetByPath('.profile-section-info i').click(this.doEditName.bind(this));
 		this.getWidgetByPath('.profile-section-about i').click(this.doEditAbout.bind(this));
 		this.getWidgetByPath('.profile-section-pic img').click(this.doUploadPohoto.bind(this));
+		//this.getWidgetByPath('#profilePhoto').attr('src', Utility.getDefaultPhoto());
+		
 	}
 	onNavigate(data){
 		if(data.userName){
@@ -19,33 +21,42 @@ class chgProfile extends BaseClass
 			image.attr('src',data.imageSrc);
 			this.isCropped = true;
 		}
+		/*if(this.isRegister)
+			this.getWidgetByPath('#profilePhoto').attr('alt', 'dProfile.png');*/
 	}
 	authCallback(response){
 		console.log( "Logged in successfully." );
 		var userName = localStorage.getItem("userName");
 		if(userName)
-			app.navigateTo('contactPanel', {});
+			app.navigateTo(contactPanel, {});
 	}
 	authErrorCallback(){
 	}
 	postShow(){
+
 		if(this.isCropped)
 			return;
 		this.adjustAllFields();
-		var uid = Utility.getCurrentUserId();
-		if(uid && uid !== '' && !this.isRegister){
-			provider.inqContacts((profileData)=>{
-				this.addChgProfile(profileData);
-			}, uid);
-		}
+		this.loadProfile();
 	}
-	validateProfile(userName, callback){
-		auth.signInWithEmailAndPassword(userName+'@gmail.com', 'Test@123').then(this.loginCallback.bind(this, callback)).catch(function(error) {
-			if(error.code == "auth/user-not-found"){
-				localStorage.removeItem("userName");
-				callback();
+	loadProfile(profileData){
+		if(this.isRegister)
+			return;
+		var uid = this.getAuthUserId();
+		if(profileData){
+			if(profileData.id === uid){
+				this.addProfile(profileData);
 			}
-		}.bind(this));
+		}else{
+			var crit = {where : {id: uid}};
+			storage.getAllContacts(crit, function(results){
+				if(results.length > 0){
+					this.addProfile(results.item(0));
+				}else{
+					this.addProfile({pic: Utility.getDefaultPhoto()});
+				}
+			}.bind(this));
+		}
 	}
 	adjustAllFields(){
 		this.getWidgetByPath('#lbl_contact_name').show();
@@ -111,43 +122,85 @@ class chgProfile extends BaseClass
 	}
 
 	doUploadPohoto(){
-		app.navigateTo('ImageCropper');
+		app.navigateTo(ImageCropper);
 	}
 	loginCallback(callback, response){
 		console.log( "Logged in successfully." );
 		callback();
 	}
 
-	doChgRegister(){
+	doChgRegisterold(){
+		var authId = this.getAuthUserId();
 		var data = this.getWidgetByPath('#profilePhoto').attr('src');
 		var fileName = this.getWidgetByPath('#profilePhoto').attr('alt');
-		Utility.uploadImage(data, 'png', fileName, function(url){
-			this.doChgRegister2(url);
-		}.bind(this));
+		if(fileName !== ""){
+			Utility.uploadImage2Store(data, 'ProfileImages/'+authId, 'png', fileName, function(){
+				storage.insertImage({'imgData': data, id: this.getAuthUserId(), 'fileName': 'ProfileImages/'+fileName}, function(){
+					this.doChgRegister2(fileName);
+				}.bind(this));
+			}.bind(this));
+		}else{
+			this.doChgRegister2('ProfileImages/profile-img.png');
+		}
 	}
-	doChgRegister2(url){
-		this.doEditName({force : true});
-		this.doEditAbout({force : true});		
+	doChgRegister(){
+		var control = this.getWidgetByPath('#chgRegister');
+		control.unbind('click');
+		control.removeClass('fa-check');
+		control.addClass('fa-spinner fa-pulse');
+		var authId = this.getAuthUserId();
+		var data = this.getWidgetByPath('#profilePhoto').attr('src');
+		var fileName = this.getWidgetByPath('#profilePhoto').attr('alt');
+		this.doChgRegister2({pic:data, picFile: fileName});
+		/*if(fileName !== ""){
+			storage.insertImage({'imgData': data, id: this.getAuthUserId(), 'fileName': 'ProfileImages/'+fileName}, function(){
+				this.doChgRegister2(fileName);
+			}.bind(this));
+		}else{
+			this.doChgRegister2('ProfileImages/profile-img.png');
+		}*/
+	}
+	getAuthUserId(){
+		if(app.isAppOnline()){
+			var currentUser = auth.currentUser;
+			return currentUser.uid;
+		}else{
+			return Utility.getCurrentUserId();
+		}
+	}
+	doChgRegister2(profilePic){
+		this.doEditName({force: true});
+		this.doEditAbout({force: true});		
 		var contactName = $('#lbl_contact_name').text();
 		var contactDesc = $('#lbl_contact_desc').text();
-		
+		var loginId = this.getAuthUserId();
 		var userId = this.userName;
 		var userData = {
-			id: Utility.getCurrentUserId(),
+			id: loginId,
 			name: contactName,
 			number : userId,
 			aboutMsg : contactDesc,
 			lastSeen: "online"
 		};
-		userData.pic = url;
+		userData.picFile = profilePic.picFile;
+		userData.pic = profilePic.pic;
 		provider.updateContact(userData.id, userData, function(){
 			localStorage.setItem("userName", userId);
-			app.navigateTo('contactPanel', userData);
-		});
+			localStorage.setItem("userId", loginId);
+			userData.isRegister = this.isRegister;
+			app.navigateTo(contactPanel, userData);
+		}.bind(this));
 	}
 	
-	addChgProfile(profileData){
-		this.getWidgetByPath('#profilePhoto').attr('src', profileData.pic);
+	addProfile(profileData){
+		if(profileData.pic)
+			this.getWidgetByPath('#profilePhoto').attr('src', profileData.pic);
+		else
+			this.getWidgetByPath('#profilePhoto').attr('src', Utility.getDefaultPhoto());
+		if(profileData.fileName)
+			this.getWidgetByPath('#profilePhoto').attr('alt', profileData.fileName);
 		this.getWidgetByPath('#lbl_contact_name').text(profileData.name);
+		var control = this.getWidgetByPath('#chgRegister');
+		control.addClass('fa-check');
 	}
 }

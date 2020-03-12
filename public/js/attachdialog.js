@@ -1,0 +1,4 @@
+class attachDialog extends dialog
+{
+
+}

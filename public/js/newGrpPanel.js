@@ -58,7 +58,7 @@ class newGrpPanel extends BaseClass
 	createGroupProfile(){
 		var data = this.getWidgetByPath('#groupPic').attr('src');
 		var fileName = this.getWidgetByPath('#groupPic').attr('alt');
-		Utility.uploadImage(data, 'png', fileName, function(url){
+		Utility.uploadImage(data, 'ProfileImages', 'png', fileName, function(url){
 			this.createGroupProfile2(url);
 		}.bind(this));
 	}
@@ -83,7 +83,7 @@ class newGrpPanel extends BaseClass
 		
 		userData.pic = url;
 		provider.updateContact(userData.id, userData, function(){
-			app.navigateTo('contactPanel');
+			app.navigateTo(contactPanel);
 		}.bind(this));
 	}
 	getMemberTemplate(contact){

@@ -1,36 +1,99 @@
-<!DOCTYPE HTML> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Crud Demo using jsstore</title>
+    <script src="jsstore/jsstore.min.js"></script>
+</head>
+<body>
+<h4>We have included JsStore in this html code.</h4>
+</body>
+<script>
+var dbName ='JsStore_Demo';
+function getDbSchema() {
+  var tblProduct = {
+    name: 'Product',
+    columns: {
+        // Here "Id" is name of column 
+        id:{ primaryKey: true, autoIncrement: true },
+        itemName:  { notNull: true, dataType: "string" },
+        price:  { notNull: true, dataType: "number" },
+        quantity : { notNull: true, dataType: "number" }
+    }
+  };
+  var db = {
+      name: dbName,
+      tables: [tblProduct]
+  }
+  return db;
+}
+// executing jsstore inside a web worker
+var connection = new JsStore.Connection(new Worker('jsstore/jsstore.worker.min.js'));
 
-<html>  
-   <head> 
-  
-      <script type = "text/javascript"> 
-         var db = openDatabase('mydb', '1.0', 'Test DB', 2 * 1024 * 1024); 
-         var msg; 
-    
-         db.transaction(function (tx) { 
-            tx.executeSql('CREATE TABLE IF NOT EXISTS LOGS (id unique, log)'); 
-            tx.executeSql('INSERT INTO LOGS (id, log) VALUES (1, "foobar")'); 
-            tx.executeSql('INSERT INTO LOGS (id, log) VALUES (2, "logmsg")'); 
-            msg = '<p>Log message created and row inserted.</p>'; 
-            document.querySelector('#status').innerHTML =  msg; 
-         })
-
-         db.transaction(function (tx) { 
-            tx.executeSql('SELECT * FROM LOGS', [], function (tx, results) { 
-               var len = results.rows.length, i; 
-               msg = "<p>Found rows: " + len + "</p>"; 
-               document.querySelector('#status').innerHTML +=  msg; 
-      
-               for (i = 0; i < len; i++) { 
-                  msg = "<p><b>" + results.rows.item(i).log + "</b></p>"; 
-                  document.querySelector('#status').innerHTML +=  msg; 
-               } 
-            }, null); 
-         }); 
-      </script> 
-   </head> 
-  
-   <body> 
-      <div id = "status" name = "status">Status Message</div> 
-   </body> 
+async function initJsStore() {
+      var database = getDbSchema();
+      const isDbCreated = await connection.initDb(database);
+      if(isDbCreated===true){
+          console.log("db created");
+          // here you can prefill database with some data
+      }
+      else {
+          console.log("db opened");
+      }
+}
+initJsStore();
+async function insert(){
+	var noOfDataInserted = await connection.insert({
+		into: 'Product',
+		values: [value]
+	});
+	if (noOfDataInserted > 0) {
+		alert('successfully added');
+	}
+}
+var value = {
+    itemName: 'Blue Jeans',
+    price: 2000,
+    quantity: 1000
+}
+//insert(value);
+async function selectQry(){
+// results will be array of objects
+var results = await connection.select({
+    from: 'Product',
+    where: {
+        price: 2000
+    }
+});
+alert(results.length + 'record found');
+}
+//selectQry();
+async function update(){
+	var rowsUpdated = await connection.update({ 
+		in: 'Product',
+		where: {
+			itemName: {
+				like: '%Blue%'
+			}
+		},
+		set: {
+			quantity: 2001
+		}
+	});
+	alert(rowsUpdated + ' rows updated');
+}
+//update();
+async function remove(){
+	var rowsDeleted = await connection.remove({
+    from: 'Product',
+    where: {
+        quantity: 2001
+    }
+	});
+	alert(rowsDeleted + ' record deleted');
+}
+remove();
+</script>
 </html>
