@@ -40,6 +40,7 @@ class allContactsPanel extends BaseClass
 	loadContacts(contact, callback){
 		var contactHtml = $(Utility.loadContactTemplate(contact, null));
 		contactHtml.click(callback);
+		$(contactHtml.find('.chat-head')).val(contact.id);
 		this.getWidgetByPath('.list-chats').append(contactHtml);
 
 	}
@@ -91,8 +92,8 @@ class allContactsPanel extends BaseClass
 		}		
 		var pic = selectChat.find('img').attr('src');
 		var name = selectChat.find('.user-name span').text();
-		var info = selectChat.find('#info').text();
-		var id = selectChat.find('#contactId').text();
+		var info = selectChat.find('.group-chat').length>0?1:0;
+		var id = selectChat.find('.chat-head').val();
 
 		app.navigateTo(chatbody, {'pic':pic, 'name': name, 'info': info, 'id': id});
 		//chatbody.show();
